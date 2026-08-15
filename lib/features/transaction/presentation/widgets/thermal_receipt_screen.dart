@@ -183,7 +183,7 @@ class _ThermalReceiptScreenState extends State<ThermalReceiptScreen> {
 
                                 children: [
                                   Text(
-                                    transaction.storeName ?? '-',
+                                    transaction.storeName ?? 'Bisa Kulak Gresik',
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
 
@@ -197,7 +197,7 @@ class _ThermalReceiptScreenState extends State<ThermalReceiptScreen> {
                                   const SizedBox(height: 2),
 
                                   Text(
-                                    transaction.storeAddress ?? '-',
+                                    transaction.storeAddress ?? 'Jl. Raya kepatihan No.49, Kecamatan Menganti, Kabupaten Gresik, Jawa Timur',
                                     maxLines: 2,
                                     overflow: TextOverflow.ellipsis,
 
@@ -373,8 +373,8 @@ class _ThermalReceiptScreenState extends State<ThermalReceiptScreen> {
                           ),
                         ),
 
-                        const Text(
-                          'Email: bisakulakpusat@gmail.com',
+                         Text(
+                          '${transaction.storeEmail ?? 'bisakulakpusat@gmail.com'} (${transaction.storePhone ?? '0851-7959-5011'})',
                           textAlign: TextAlign.center,
 
                           style: TextStyle(
@@ -396,9 +396,7 @@ class _ThermalReceiptScreenState extends State<ThermalReceiptScreen> {
 
             child: Container(
               width: double.infinity,
-
               padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-
               decoration: BoxDecoration(
                 color: Colors.white,
 
@@ -413,7 +411,6 @@ class _ThermalReceiptScreenState extends State<ThermalReceiptScreen> {
 
               child: Column(
                 mainAxisSize: MainAxisSize.min,
-
                 children: [
                   // INFO PRINTER
                   Container(

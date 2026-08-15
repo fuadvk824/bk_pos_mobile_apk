@@ -50,7 +50,7 @@ class TokenManager {
 
   static Future<void> set(String token) async {
     // Masa berlaku token lokal.
-    const duration = Duration(minutes: 5);
+    const duration = Duration(hours: 3);
 
     final expiresAt = DateTime.now().add(duration);
 

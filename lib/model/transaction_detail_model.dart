@@ -18,6 +18,8 @@ class TransactionDetailModel {
   
   final String? storeName;
   final String? storeAddress;
+  final String? storeEmail;
+  final String? storePhone;
 
   final String? companyName;
   final String? companyAddress;
@@ -48,6 +50,8 @@ class TransactionDetailModel {
    
     required this.storeName,
     required this.storeAddress,
+    required this.storeEmail,
+    required this.storePhone,
 
     required this.companyName,
     required this.companyAddress,
@@ -80,6 +84,8 @@ class TransactionDetailModel {
       
       storeName: json['store']?['name'],
       storeAddress: json['store']?['address'],
+      storeEmail: json['store']?['email'],
+      storePhone: json['store']?['phone'],
 
       companyName: json['company']?['name'],
       companyAddress: json['company']?['address'],

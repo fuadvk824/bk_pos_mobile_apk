@@ -104,6 +104,17 @@ class _ThermalProductScreenState extends State<ThermalProductScreen> {
         ? product.barcode!
         : product.productCode;
 
+    // final now = DateTime.now();
+    // final firstDay = DateTime(now.year, now.month, 1);
+    // final lastDay = DateTime(now.year, now.month + 1, 0);
+    // final dateFormat = DateFormat('dd-MM-yyyy');
+    // final periodText =
+    //     '${dateFormat.format(firstDay)} s/d ${dateFormat.format(lastDay)}';
+
+    final now = DateTime.now();
+    final dateFormat = DateFormat('MMM yyyy', 'en_US');
+    final periodText = 'Periode - ${dateFormat.format(now)}';
+
     return Scaffold(
       backgroundColor: const Color(0xFFF3F4F6),
 
@@ -145,91 +156,112 @@ class _ThermalProductScreenState extends State<ThermalProductScreen> {
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                            fontSize: 16,
+                            fontSize: 18,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
 
-                        const SizedBox(height: 0),
+                        const SizedBox(height: 2),
                         const Divider(color: AppColors.dark, height: 1),
-                        const SizedBox(height: 0),
+                        const SizedBox(height: 2),
 
                         // HARGA + QR
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'Harga Normal',
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      color: Colors.black,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
+                              child: SizedBox(
+                                height: 100,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
 
-                                  Text(
-                                    currency.format(product.price),
-                                    style: const TextStyle(
-                                      fontSize: 19,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
+                                  children: [
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        const Text(
+                                          'Harga Normal',
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            color: Colors.black,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
 
-                                  const SizedBox(height: 14),
-
-                                  const Text(
-                                    'Harga Promo',
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      color: Colors.black,
-                                      fontWeight: FontWeight.bold,
+                                        Text(
+                                          currency.format(product.price),
+                                          style: const TextStyle(
+                                            fontSize: 19,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        const Divider(
+                                          color: AppColors.dark,
+                                          height: 1,
+                                        ),
+                                      ],
                                     ),
-                                  ),
 
-                                  Text(
-                                    currency.format(product.finalPrice),
-                                    style: const TextStyle(
-                                      fontSize: 19,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black,
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        const Text(
+                                          'Harga Promo',
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            color: Colors.black,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+
+                                        Text(
+                                          currency.format(product.finalPrice),
+                                          style: const TextStyle(
+                                            fontSize: 19,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.black,
+                                          ),
+                                        ),
+                                        const Divider(
+                                          color: AppColors.dark,
+                                          height: 1,
+                                        ),
+                                      ],
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ),
 
                             const SizedBox(width: 16),
 
-                            QrImageView(
-                              data: qrData,
-                              version: QrVersions.auto,
-                              size: 100,
-                              backgroundColor: Colors.white,
-                              errorCorrectionLevel: QrErrorCorrectLevel.M,
+                            Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                QrImageView(
+                                  data: qrData,
+                                  version: QrVersions.auto,
+                                  size: 100,
+                                  backgroundColor: Colors.white,
+                                  errorCorrectionLevel: QrErrorCorrectLevel.M,
+                                ),
+                                Text(
+                                  periodText,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    fontSize: 8,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
-
-                        // const SizedBox(height: 12),
-
-                        // const Divider(thickness: 1),
-
-                        // const SizedBox(height: 6),
-
-                        // // KODE PRODUK
-                        // Text(
-                        //   product.productCode,
-                        //   textAlign: TextAlign.center,
-                        //   style: const TextStyle(
-                        //     fontSize: 11,
-                        //     letterSpacing: 1,
-                        //     fontWeight: FontWeight.w600,
-                        //   ),
-                        // ),
                       ],
                     ),
                   ),
