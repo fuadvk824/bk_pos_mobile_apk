@@ -41,7 +41,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
                 height: 90,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.green.shade50,
+                  color: Colors.red.shade50,
                 ),
                 child: Icon(
                   isDownloading
@@ -71,7 +71,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.green.shade50,
+                    color: Colors.red.shade50,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(

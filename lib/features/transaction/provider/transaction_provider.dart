@@ -8,19 +8,25 @@ final transactionRepositoryProvider = Provider(
 
 enum TransactionFilter { all, paid, partial, unpaid }
 
+const _unset = Object();
+
 class TransactionState {
   final bool isLoading;
-
   final List<TransactionModel> transactions;
   final List<TransactionModel> allTransactions;
-
   final TransactionFilter selectedFilter;
+  final int? selectedMonth;
+  final int? selectedYear;
+  final String? error;
 
   TransactionState({
     this.isLoading = false,
     this.transactions = const [],
     this.allTransactions = const [],
     this.selectedFilter = TransactionFilter.all,
+    this.selectedMonth,
+    this.selectedYear,
+    this.error,
   });
 
   TransactionState copyWith({
@@ -28,12 +34,22 @@ class TransactionState {
     List<TransactionModel>? transactions,
     List<TransactionModel>? allTransactions,
     TransactionFilter? selectedFilter,
+    Object? selectedMonth = _unset,
+    Object? selectedYear = _unset,
+    Object? error = _unset,
   }) {
     return TransactionState(
       isLoading: isLoading ?? this.isLoading,
       transactions: transactions ?? this.transactions,
       allTransactions: allTransactions ?? this.allTransactions,
       selectedFilter: selectedFilter ?? this.selectedFilter,
+      selectedMonth: selectedMonth == _unset
+          ? this.selectedMonth
+          : selectedMonth as int?,
+      selectedYear: selectedYear == _unset
+          ? this.selectedYear
+          : selectedYear as int?,
+      error: error == _unset ? this.error : error as String?,
     );
   }
 }
@@ -46,22 +62,28 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
   }
 
   Future<void> load() async {
-    state = state.copyWith(isLoading: true);
-    final transactions = await repo.getTransactions();
+    state = state.copyWith(isLoading: true, error: null);
 
-    state = state.copyWith(
-      isLoading: false,
-      transactions: transactions,
-      allTransactions: transactions,
-    );
+    try {
+      final transactions = await repo.getTransactions(
+        month: state.selectedMonth,
+        year: state.selectedYear,
+      );
+
+      state = state.copyWith(isLoading: false, allTransactions: transactions);
+
+      _applyFilter();
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+    }
   }
 
-  void setFilter(TransactionFilter filter) {
+  void _applyFilter() {
     List<TransactionModel> filtered = [];
 
-    switch (filter) {
+    switch (state.selectedFilter) {
       case TransactionFilter.all:
-        filtered = List.from(state.allTransactions);
+        filtered = [...state.allTransactions];
         break;
 
       case TransactionFilter.paid:
@@ -83,7 +105,23 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
         break;
     }
 
-    state = state.copyWith(selectedFilter: filter, transactions: filtered);
+    state = state.copyWith(transactions: filtered);
+  }
+
+  void setFilter(TransactionFilter filter) {
+    state = state.copyWith(selectedFilter: filter);
+
+    _applyFilter();
+  }
+
+  Future<void> setPeriod({int? month, int? year}) async {
+    if (month == state.selectedMonth && year == state.selectedYear) {
+      return;
+    }
+
+    state = state.copyWith(selectedMonth: month, selectedYear: year);
+
+    await load();
   }
 }
 

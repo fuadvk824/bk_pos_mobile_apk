@@ -5,32 +5,64 @@ import '../../../core/storage/token_manager.dart';
 import '../../../model/user_model.dart';
 
 class AuthRepository {
-  Future<UserModel> login(String email, String password) async {
+  Future<UserModel> login(String login, String password) async {
     try {
       final res = await DioClient.dio.post(
         '/login',
-        data: {"email": email, "password": password},
+        data: {'login': login, 'password': password},
       );
+      // print('LOGIN RESPONSE: ${res.data}');
+      final data = res.data;
 
-      final token = res.data['token'];
-      await TokenManager.set(token);
+      if (data is! Map) {
+        throw Exception('Response server tidak valid');
+      }
 
-      final me = await DioClient.dio.get('/users');
-      return UserModel.fromJson(me.data['data']);
+      final token = data['token'];
+
+      if (token == null || token.toString().isEmpty) {
+        throw Exception('Token login tidak ditemukan');
+      }
+
+      // Simpan token terlebih dahulu
+      await TokenManager.set(token.toString());
+
+      // Ambil data user lengkap dari endpoint /users
+      final user = await me();
+
+      if (user == null) {
+        throw Exception('Data user tidak ditemukan dari server');
+      }
+
+      return user;
     } on DioException catch (e) {
-      // ambil message dari backend
-      final msg = e.response?.data['message'] ?? "Login gagal";
-      throw Exception(msg);
+      String message = 'Login gagall';
+
+      final responseData = e.response?.data;
+
+      if (responseData is Map && responseData['message'] != null) {
+        message = responseData['message'].toString();
+      } else if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.sendTimeout) {
+        message = 'Koneksi ke server timeout';
+      } else if (e.type == DioExceptionType.connectionError) {
+        message = 'Tidak dapat terhubung ke server';
+      } else if (e.response?.statusCode == 500) {
+        message = 'Terjadi error pada server';
+      } else if (e.response?.statusCode == 502) {
+        message = 'Server login eksternal sedang bermasalah';
+      }
+
+      throw Exception(message);
+    } catch (e) {
+      throw Exception(e.toString().replaceFirst('Exception: ', ''));
     }
   }
 
   Future<UserModel?> me() async {
-    try {
-      final res = await DioClient.dio.get('/users');
-      return UserModel.fromJson(res.data['data']);
-    } catch (_) {
-      return null;
-    }
+    final res = await DioClient.dio.get('/users');
+    return UserModel.fromJson(Map<String, dynamic>.from(res.data['data']));
   }
 
   Future<void> logout() async {

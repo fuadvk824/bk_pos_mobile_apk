@@ -1,4 +1,5 @@
 import 'package:bk_pos/core/network/dio_client.dart';
+import 'package:bk_pos/utils/app_toast.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../provider/auth_provider.dart';
@@ -20,48 +21,67 @@ class _ForceChangePasswordScreenState
   bool isObscure1 = true;
   bool isObscure2 = true;
 
+  @override
+  void dispose() {
+    password.dispose();
+    confirm.dispose();
+    super.dispose();
+  }
+
   Future<void> submit() async {
     if (password.text.length < 6) {
-      showMessage("Password minimal 6 karakter");
+      AppToast.error(
+        title: 'Password tidak valid',
+        description: 'Password minimal 6 karakter',
+      );
       return;
     }
 
     if (password.text != confirm.text) {
-      showMessage("Password tidak sama");
+      AppToast.error(
+        title: 'Password tidak sama',
+        description: 'Pastikan password dan konfirmasi password sama',
+      );
       return;
     }
 
-    setState(() => isLoading = true);
+    setState(() {
+      isLoading = true;
+    });
 
     try {
       await DioClient.dio.post(
         '/update-password',
         data: {
-          "password": password.text,
-          "password_confirmation": confirm.text,
+          'password': password.text,
+          'password_confirmation': confirm.text,
         },
       );
 
       if (!mounted) return;
 
-      showMessage("Password berhasil diubah", success: true);
+      AppToast.success(
+        title: 'Password berhasil diubah',
+        description: 'Password baru berhasil disimpan',
+      );
 
       await ref.read(authProvider.notifier).loadUser();
     } catch (e) {
-      showMessage("Gagal update password");
+      if (!mounted) return;
+
+      AppToast.error(
+        title: 'Gagal update password',
+        description: 'Terjadi kesalahan saat mengubah password',
+      );
+
       debugPrint(e.toString());
     } finally {
-      setState(() => isLoading = false);
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
     }
-  }
-
-  void showMessage(String msg, {bool success = false}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(msg),
-        backgroundColor: success ? Colors.green : Colors.red,
-      ),
-    );
   }
 
   @override
@@ -69,7 +89,7 @@ class _ForceChangePasswordScreenState
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: const Text("Ganti Password"),
+        title: const Text('Ganti Password'),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
@@ -99,22 +119,24 @@ class _ForceChangePasswordScreenState
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Text(
-                  "Update Password 🔒",
+                  'Update Password 🔒',
                   style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                 ),
+
                 const SizedBox(height: 8),
+
                 const Text(
-                  "Silakan buat password baru",
+                  'Silakan buat password baru',
                   style: TextStyle(color: Colors.grey),
                 ),
+
                 const SizedBox(height: 30),
 
-                // PASSWORD
                 TextField(
                   controller: password,
                   obscureText: isObscure1,
                   decoration: InputDecoration(
-                    labelText: "Password Baru",
+                    labelText: 'Password Baru',
                     prefixIcon: const Icon(Icons.lock_outline),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
@@ -134,12 +156,11 @@ class _ForceChangePasswordScreenState
 
                 const SizedBox(height: 16),
 
-                // CONFIRM PASSWORD
                 TextField(
                   controller: confirm,
                   obscureText: isObscure2,
                   decoration: InputDecoration(
-                    labelText: "Konfirmasi Password",
+                    labelText: 'Konfirmasi Password',
                     prefixIcon: const Icon(Icons.lock_reset),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
@@ -159,7 +180,6 @@ class _ForceChangePasswordScreenState
 
                 const SizedBox(height: 24),
 
-                // BUTTON
                 SizedBox(
                   width: double.infinity,
                   height: 50,
@@ -180,7 +200,7 @@ class _ForceChangePasswordScreenState
                             ),
                           )
                         : const Text(
-                            "Update Password",
+                            'Update Password',
                             style: TextStyle(fontSize: 16),
                           ),
                   ),

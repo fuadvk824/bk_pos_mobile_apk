@@ -3,9 +3,11 @@ import 'package:bk_pos/features/cashier/presentation/customer_form.dart';
 import 'package:bk_pos/features/cashier/presentation/delivery_form.dart';
 import 'package:bk_pos/features/cashier/presentation/payment_form.dart';
 import 'package:bk_pos/features/cashier/provider/checkout_provider.dart';
+import 'package:bk_pos/utils/app_colors.dart';
+import 'package:bk_pos/utils/app_toast.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
- 
+
 class CheckoutScreen extends ConsumerWidget {
   const CheckoutScreen({super.key});
 
@@ -15,101 +17,101 @@ class CheckoutScreen extends ConsumerWidget {
     final notifier = ref.read(checkoutProvider.notifier);
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Checkout")),
+      backgroundColor: AppColors.muted,
+      appBar: AppBar(
+        elevation: 0,
+        centerTitle: true,
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        title: const Text(
+          "Checkout",
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+      ),
 
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-        children: [
-          const Text(
-            "Data Customer",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+        children: const [
+          CustomerForm(),
+          SizedBox(height: 12),
+          DeliveryForm(),
+          SizedBox(height: 12),
+          PaymentForm(),
+          SizedBox(height: 12),
+          CheckoutSummary(),
+        ],
+      ),
+
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: .06),
+                blurRadius: 12,
+                offset: const Offset(0, -2),
+              ),
+            ],
           ),
-
-          const SizedBox(height: 10),
-
-          const CustomerForm(),
-
-          const SizedBox(height: 20),
-
-          const Text(
-            "Pengiriman",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-
-          const SizedBox(height: 10),
-
-          const DeliveryForm(),
-
-          const SizedBox(height: 20),
-
-          const Text(
-            "Pembayaran",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-
-          const SizedBox(height: 10),
-
-          const PaymentForm(),
-
-          const SizedBox(height: 20),
-
-          const CheckoutSummary(),
-
-          const SizedBox(height: 30),
-
-          SizedBox(
-            height: 50,
-            child: ElevatedButton(
+          child: SizedBox(
+            height: 56,
+            width: double.infinity,
+            child: ElevatedButton.icon(
+             
               onPressed: state.isLoading
                   ? null
                   : () async {
-                      final error = notifier.validateCheckout();
+                      final result = await notifier.processCheckout();
 
-                      if (error != null) {
-                        ScaffoldMessenger.of(
-                          context,
-                        ).showSnackBar(SnackBar(content: Text(error)));
+                      if (!context.mounted) return;
 
-                        return;
-                      }
-
-                      try {
-                        await notifier.submit();
-
-                        notifier.clearAll();
-
-                        if (!context.mounted) {
-                          return;
-                        }
-
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text("Transaksi berhasil")),
+                      if (result.success) {
+                        AppToast.success(
+                          title: 'Checkout Berhasil',
+                          description: result.message,
                         );
-
                         Navigator.popUntil(context, (route) => route.isFirst);
-                      } catch (e) {
-                        if (!context.mounted) {
-                          return;
-                        }
-
-                        ScaffoldMessenger.of(
-                          context,
-                        ).showSnackBar(SnackBar(content: Text(e.toString())));
+                      } else {
+                        AppToast.error(
+                          title: 'Checkout Gagal',
+                          description: result.message,
+                        );
                       }
                     },
-              child: state.isLoading
+
+              icon: state.isLoading
                   ? const SizedBox(
-                      width: 22,
-                      height: 22,
+                      width: 20,
+                      height: 20,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
                         color: Colors.white,
                       ),
                     )
-                  : const Text("Simpan Transaksi"),
+                  : const Icon(Icons.save_rounded),
+              label: Text(
+                state.isLoading ? "Menyimpan..." : "Simpan Transaksi",
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                elevation: 0,
+                backgroundColor: Colors.blue,
+                foregroundColor: Colors.white,
+                disabledBackgroundColor: Colors.blue.shade300,
+                disabledForegroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
             ),
           ),
-        ],
+        ),
       ),
     );
   }

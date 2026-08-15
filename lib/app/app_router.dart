@@ -1,4 +1,3 @@
-// import 'package:bk_pos/features/auth/presentation/update_password_screen.dart';
 import 'package:bk_pos/features/update/presentatioon/update_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,6 +7,7 @@ import '../features/auth/presentation/auth_login_screen.dart';
 import '../features/auth/provider/auth_provider.dart';
 
 import '../features/update/service/update_service.dart';
+ 
 
 class AppRouter extends ConsumerStatefulWidget {
   const AppRouter({super.key});
@@ -43,6 +43,8 @@ class _AppRouterState extends ConsumerState<AppRouter> {
       if (hasUpdate) {
         final currentVersion = await updateService.getCurrentVersion();
 
+        if (!mounted) return;
+
         showDialog(
           context: context,
           barrierDismissible: false,
@@ -54,7 +56,7 @@ class _AppRouterState extends ConsumerState<AppRouter> {
         );
       }
     } catch (e) {
-      debugPrint("Check update error: $e");
+      debugPrint('Check update error: $e');
     }
   }
 
@@ -66,17 +68,12 @@ class _AppRouterState extends ConsumerState<AppRouter> {
       loading: () =>
           const Scaffold(body: Center(child: CircularProgressIndicator())),
 
-      // error: (_, _) => const AuthLoginScreen(),
-      error: (e, s) => Scaffold(body: Center(child: Text("Error auth: $e"))),
+      error: (e, s) => const AuthLoginScreen(),
 
       data: (user) {
         if (user == null) {
           return const AuthLoginScreen();
         }
-
-        // if (user.keyStatus == 'new') {
-        //   return const ForceChangePasswordScreen();
-        // }
 
         return const BottomNavbar();
       },

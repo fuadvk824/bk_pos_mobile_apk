@@ -1,3 +1,4 @@
+import 'package:bk_pos/model/checkout_result_model.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/checkout_repository.dart';
@@ -123,16 +124,26 @@ class CheckoutNotifier extends StateNotifier<CheckoutState> {
     return null;
   }
 
-  Future<void> submit() async {
+  Future<CheckoutResult> processCheckout() async {
+    final error = validateCheckout();
+
+    if (error != null) {
+      return CheckoutResult(success: false, message: error);
+    }
+
     state = state.copyWith(isLoading: true);
 
     try {
       await repo.submitTransaction(checkoutPayload());
+      clearAll();
+
+      return const CheckoutResult(success: true, message: "Transaksi berhasil");
+    } catch (e) {
+      return CheckoutResult(success: false, message: e.toString());
     } finally {
       state = state.copyWith(isLoading: false);
     }
   }
-
 
   void clearAll() {
     state = const CheckoutState();

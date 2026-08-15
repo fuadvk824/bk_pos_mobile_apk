@@ -17,6 +17,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
 version: 1.0.0+1
+# version: 1.0.1+2
 
 environment:
   sdk: ^3.11.0
@@ -44,6 +45,17 @@ dependencies:
   path_provider: ^2.0.15          #Untuk menentukan lokasi penyimpanan APK
   open_filex: ^4.7.0              #Untuk buka file APK setelah selesai didownload.
   lucide_icons_flutter: ^3.1.10   #lucide icon
+  sliver_tools: ^0.2.12           #fitur kayak sticky
+  mobile_scanner: ^7.0.1          #scanner
+  curved_labeled_navigation_bar: ^2.0.6 #bottom navbar
+  print_bluetooth_thermal: ^1.2.1 #print thermal
+  screenshot: ^3.0.0              #buat print thermal jadi via image 
+  esc_pos_utils_plus: ^2.0.4      #anggap driver unutk print thermal
+  image: ^4.5.4
+  qr_flutter: ^4.1.0
+  toastification: ^3.0.3
+  pdf: ^3.11.3                    #print pdf
+  printing: ^5.13.4               #print pdf
 
 dev_dependencies:
   flutter_test:
@@ -63,6 +75,7 @@ dev_dependencies:
 flutter:
   assets:
     - .env
+    - assets/images/logo.jpeg
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.

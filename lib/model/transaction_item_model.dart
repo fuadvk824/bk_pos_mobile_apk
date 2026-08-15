@@ -2,6 +2,8 @@ class TransactionItemModel {
   final int id;
 
   final String productName;
+  final String productCode;
+  final String unit;
 
   final int quantity;
 
@@ -13,6 +15,8 @@ class TransactionItemModel {
   TransactionItemModel({
     required this.id,
     required this.productName,
+    required this.productCode,
+    required this.unit,
     required this.quantity,
     required this.basePrice,
     required this.price,
@@ -27,6 +31,8 @@ class TransactionItemModel {
       id: json['id'] ?? 0,
 
       productName: json['product_name'] ?? '',
+      productCode: json['product_code'] ?? '',
+      unit: json['unit'] ?? '',
 
       quantity:
           int.tryParse(

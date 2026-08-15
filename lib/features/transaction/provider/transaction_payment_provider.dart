@@ -25,13 +25,11 @@ class TransactionPaymentNotifier
 
   Future<void> submit({
     required int transactionId,
-
     String? driverName,
     String? deliveryType,
     double? shippingCost,
-
+    String? notes,
     required String paymentMethod,
-
     required double amount,
   }) async {
     state = state.copyWith(loading: true);
@@ -44,6 +42,7 @@ class TransactionPaymentNotifier
         shippingCost: shippingCost,
         paymentMethod: paymentMethod,
         amount: amount,
+        notes: notes,
       );
     } finally {
       state = state.copyWith(loading: false);

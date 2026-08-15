@@ -8,7 +8,7 @@ class Profile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SafeArea(child: Center(child: Text('Menu Profile, pending...'))),
+      body: SafeArea(child: Center(child: Text('Menunggu API Bee Accounting...'))),
     );
   }
 }

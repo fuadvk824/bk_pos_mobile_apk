@@ -5,7 +5,8 @@ class ProductModel {
   final String unit;
   final String? image;
   final String? barcode;
-
+  final String? description;
+  
   final int stock;
   final int sold;
 
@@ -22,6 +23,7 @@ class ProductModel {
     required this.unit,
     required this.image,
     required this.barcode,
+    required this.description,
     required this.stock,
     required this.sold,
     required this.price,
@@ -40,6 +42,7 @@ class ProductModel {
       unit: json['unit'],
       image: json['image'],
       barcode: json['barcode'],
+      description: json['description'],
       stock: int.tryParse(json['stock'].toString()) ?? 0,
       sold: int.tryParse(json['sold'].toString()) ?? 0,
       price: double.tryParse(json['price'].toString()) ?? 0.0,
