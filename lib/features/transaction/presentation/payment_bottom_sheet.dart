@@ -55,7 +55,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
   }
 
   double get currentTotal {
-    return widget.transaction.subtotal + shippingCost;
+    return widget.transaction.subtotal + shippingCost - widget.transaction.pointsUsed;
   }
 
   double get remaining {
@@ -70,6 +70,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
   //     TextPosition(offset: amountController.text.length),
   //   );
   // }
+  
   void refreshAmountIfNeeded() {
     if (amountEdited) return;
 

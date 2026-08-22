@@ -12,7 +12,14 @@ import '../../cashier/provider/cart_provider.dart';
 class ProductScanResultScreen extends ConsumerStatefulWidget {
   final ProductModel product;
 
-  const ProductScanResultScreen({super.key, required this.product});
+  // const ProductScanResultScreen({super.key, required this.product});
+  final bool isBackorder;
+
+  const ProductScanResultScreen({
+    super.key,
+    required this.product,
+    this.isBackorder = false,
+  });
 
   @override
   ConsumerState<ProductScanResultScreen> createState() =>
@@ -23,7 +30,8 @@ class _ProductScanResultScreenState
     extends ConsumerState<ProductScanResultScreen> {
   bool _showFullDescription = false;
   int _qty = 1;
-  bool get _stockError => _qty > widget.product.stock;
+  // bool get _stockError => _qty > widget.product.stock;
+  bool get _stockError => !widget.isBackorder && _qty > widget.product.stock;
 
   final TextEditingController _qtyController = TextEditingController(text: "1");
   final FocusNode _qtyFocus = FocusNode();
@@ -235,10 +243,17 @@ class _ProductScanResultScreenState
 
                                   Divider(),
 
+                                  // _infoTile(
+                                  //   Icons.inventory,
+                                  //   "Stok",
+                                  //   "${widget.product.stock}",
+                                  // ),
                                   _infoTile(
                                     Icons.inventory,
                                     "Stok",
-                                    "${widget.product.stock}",
+                                    widget.isBackorder
+                                        ? "Backorder"
+                                        : "${widget.product.stock}",
                                   ),
 
                                   Divider(),
@@ -455,9 +470,7 @@ class _ProductScanResultScreenState
 
                       style: OutlinedButton.styleFrom(
                         minimumSize: const Size.fromHeight(48),
-
                         foregroundColor: AppColors.primary,
-
                         side: BorderSide(color: AppColors.primary),
 
                         shape: RoundedRectangleBorder(
@@ -545,24 +558,58 @@ class _ProductScanResultScreenState
                           ),
                           icon: const Icon(Icons.shopping_cart),
                           label: const Text("Tambah Keranjang"),
+                          // onPressed: _stockError
+                          //     ? null
+                          //     : () {
+                          //         ref
+                          //             .read(cartProvider.notifier)
+                          //             .add(widget.product, qty: _qty);
+
+                          //         Navigator.pop(context);
+
+                          //         Future.delayed(
+                          //           const Duration(milliseconds: 100),
+                          //           () {
+                          //             AppToast.success(
+                          //               title:
+                          //                   "${widget.product.name} ditambahkan",
+                          //             );
+                          //           },
+                          //         );
+                          //       },
                           onPressed: _stockError
                               ? null
                               : () {
-                                  ref
-                                      .read(cartProvider.notifier)
-                                      .add(widget.product, qty: _qty);
+                                  try {
+                                    ref
+                                        .read(cartProvider.notifier)
+                                        .add(
+                                          widget.product,
+                                          qty: _qty,
+                                          backorder: widget.isBackorder,
+                                        );
 
-                                  Navigator.pop(context);
+                                    Navigator.pop(context);
 
-                                  Future.delayed(
-                                    const Duration(milliseconds: 100),
-                                    () {
-                                      AppToast.success(
-                                        title:
-                                            "${widget.product.name} ditambahkan",
-                                      );
-                                    },
-                                  );
+                                    Future.delayed(
+                                      const Duration(milliseconds: 100),
+                                      () {
+                                        AppToast.success(
+                                          title: widget.isBackorder
+                                              ? "${widget.product.name} ditambahkan sebagai Backorder"
+                                              : "${widget.product.name} ditambahkan",
+                                        );
+                                      },
+                                    );
+                                  } catch (e) {
+                                    AppToast.error(
+                                      title: 'Gagal menambahkan produk',
+                                      description: e.toString().replaceFirst(
+                                        'Exception: ',
+                                        '',
+                                      ),
+                                    );
+                                  }
                                 },
                         ),
                       ),
@@ -576,6 +623,7 @@ class _ProductScanResultScreenState
       ),
     );
   }
+
   Widget _infoTile(
     IconData icon,
     String title,

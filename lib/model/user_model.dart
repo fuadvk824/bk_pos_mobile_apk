@@ -4,6 +4,7 @@ class UserModel {
 
   final int storeId;
   final String storeName;
+  final String storeView;
   final String storeCode;
 
   final double targetAmount;
@@ -16,6 +17,7 @@ class UserModel {
     required this.userName,
     required this.storeId,
     required this.storeName,
+    required this.storeView,
     required this.storeCode,
     required this.targetAmount,
     required this.todaySales,
@@ -29,6 +31,7 @@ class UserModel {
       userName: json['user_name'],
       storeId: json['store_id'],
       storeName: json['store_name'],
+      storeView: json['store_view'],
       storeCode: json['store_code'],
       targetAmount: double.tryParse(json['target_amount'].toString()) ?? 0.0,
       todaySales: double.tryParse(json['today_sales'].toString()) ?? 0,

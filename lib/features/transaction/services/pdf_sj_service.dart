@@ -228,7 +228,7 @@ class PdfSjService {
               pw.SizedBox(height: 2),
 
               pw.Text(
-                trx.storeName ?? "-",
+                trx.storeView ?? "-",
                 maxLines: 1,
                 style: pw.TextStyle(
                   fontSize: bodyFont,

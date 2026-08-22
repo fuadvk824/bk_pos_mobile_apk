@@ -158,10 +158,20 @@ class _ProductScanScreenState extends ConsumerState<ProductScanScreen>
       return;
     }
 
+    // await Navigator.push(
+    //   context,
+    //   MaterialPageRoute(
+    //     builder: (_) => ProductScanResultScreen(product: product),
+    //   ),
+    // );
+    final isBackorder =
+        ref.read(productProvider).selectedFilter == ProductFilter.backorder;
+
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => ProductScanResultScreen(product: product),
+        builder: (_) =>
+            ProductScanResultScreen(product: product, isBackorder: isBackorder),
       ),
     );
 

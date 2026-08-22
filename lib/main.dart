@@ -36,8 +36,58 @@ class MyApp extends StatelessWidget {
     );
   }
 }
- 
-//==============================================================================
+//coba tanya chatgpt yg sudah saya ketik di try.dart(karena kemarin belum sempat)
+//coba beri lengkap data resource, model, migration, contorller
+
+//1. ProductNotifier
+//2. ProductFilterSection
+//3. ProductRepository
+//4. ProductGrid
+//5. CartNotifier
+//6. ProductCard
+//7. CashierScreen
+//8. CheckoutNotifier
+//9. TransactionModel
+//10. TransactionNotifier 
+//11. TransactionFilterSection
+//12. TransactionCard
+//13. TransactionRepository
+
+//____________________________________________________________________________
+
+//Jumat 21 Agustus 2026
+//PO bisa upload foto (barang rusak atau lainya)
+//minta API history mutasi
+
+//code otp potong poin terkirim ke email
+//customer (nik, email, nomor telepon, alamat, tgl lahir) 
+
+//unutk transaction_item beri kolom code invoice dan (jadi gk mengarah ke id aja)
+//unutk product_store beri kolom code product (jadi gk mengarah ke id aja)
+//sama cutomer_point pakai customer code(tamabahkan di tabel customer)
+//sama juga di payment beri code invoice pengganti transaction_id
+
+//sekarang kan ada harga dan diskon paten, nah beri lagi kolom bisa inputkan diskon manual oleh kasir
+
+//2.1  misal ada mutasi dari jember ke kediri , berarti dibuatkan PO . dan si jember tidak dapat omzet cuma product nya hilang gitu aja ke kediri(karena jember)
+
+// CONTOH MUTASI
+//1. mutasi sesama kediri = dari tokoA ke tokoB (toko gak ngapa2 in cuma confirm ke pusat minta di mutasikan) efek stok berkurang
+
+//2. mutasi antar cv = dari tokoJember ke tokoKediri (jember ngirim surat jalan yg dibawa beserta barang nya, surat jalan nanti bisa di kasih file nya oleh pusat) (kediri menerima barang dan sj jadi kayak PO nanti di POS nya, nge centang2 list PO nya)__ ini perlu API PO
+
+
+//oiya ad juga nama store ubah karena ada yg kepanjangan di nota jadi jelek. dan agar tidak di update oleh task scheduler maka buat kolom baru yaitu name_tag(ini nanti yg tampil di nota)
+
+//perbaiki agar customer hanya muncul di sesuai toko nya , jadi beri kolom json berisi code store id, jadi bisa saja customer A beli di beberapa toko cabang
+//____________________________________________________________________________
+
+
+
+
+
+
+// ==============================================================================
 //PERNYATAAN
 //==============================================================================
 //1. kalau transaklsinya partial dibuat tgl 5 lalu pelunasanya tgl 6 (berarti omzet nya tgl 6)?? iya
@@ -56,6 +106,8 @@ class MyApp extends StatelessWidget {
 //3. di gambar hp yg PO finish tanyakn elsa sulastri ini siapa?? orang toko ini
 //4. tambah scan ktp (auto input data di ktp) lalau di table customer tambah kolom email,  nik, alamat lengkap
 
+//15 Agustus 2026
+//1. unutk semua transaksi hari ini, buatkan jadi satu total omzet yg transfer dan cash
 
 
 //Informa 

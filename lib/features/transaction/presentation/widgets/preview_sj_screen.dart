@@ -223,7 +223,7 @@ class _PreviewSjScreenState extends State<PreviewSjScreen> {
                                   const SizedBox(height: 2),
 
                                   Text(
-                                    trx.storeName ?? "-",
+                                    trx.storeView ?? "-",
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: const TextStyle(
