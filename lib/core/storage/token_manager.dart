@@ -1,4 +1,5 @@
 import 'package:bk_pos/core/storage/secure_storage.dart';
+import 'package:flutter/foundation.dart';
 
 class TokenManager {
   static String? _token;
@@ -29,36 +30,43 @@ class TokenManager {
   }
 
   static Future<void> init() async {
-    final token = await SecureStorage.read('token');
-    final expiresAtString = await SecureStorage.read('token_expires_at');
+    try {
+      final token = await SecureStorage.read('token');
+      final expiresAtString = await SecureStorage.read('token_expires_at');
 
-    if (token == null || expiresAtString == null) {
-      await clear();
-      return;
+      if (token == null || expiresAtString == null) {
+        _token = null;
+        _expiresAt = null;
+        return;
+      }
+
+      final expiresAt = DateTime.tryParse(expiresAtString);
+
+      if (expiresAt == null || !DateTime.now().isBefore(expiresAt)) {
+        await clear();
+        return;
+      }
+
+      _token = token;
+      _expiresAt = expiresAt;
+    } catch (e, stackTrace) {
+      debugPrint('TokenManager.init ERROR: $e');
+      debugPrintStack(stackTrace: stackTrace);
+
+      _token = null;
+      _expiresAt = null;
     }
-
-    final expiresAt = DateTime.tryParse(expiresAtString);
-
-    if (expiresAt == null || !DateTime.now().isBefore(expiresAt)) {
-      await clear();
-      return;
-    }
-
-    _token = token;
-    _expiresAt = expiresAt;
   }
 
   static Future<void> set(String token) async {
     // Masa berlaku token lokal.
     const duration = Duration(hours: 3);
-
     final expiresAt = DateTime.now().add(duration);
 
     _token = token;
     _expiresAt = expiresAt;
 
     await SecureStorage.write('token', token);
-
     await SecureStorage.write('token_expires_at', expiresAt.toIso8601String());
   }
 
@@ -70,25 +78,3 @@ class TokenManager {
     await SecureStorage.delete('token_expires_at');
   }
 }
-
-// import 'secure_storage.dart';
-
-// class TokenManager {
-//   static String? _token;
-
-//   static String? get token => _token;
-
-//   static Future<void> init() async {
-//     _token = await SecureStorage.read('token');
-//   }
-
-//   static Future<void> set(String token) async {
-//     _token = token;
-//     await SecureStorage.write('token', token);
-//   }
-
-//   static Future<void> clear() async {
-//     _token = null;
-//     await SecureStorage.delete('token');
-//   }
-// }

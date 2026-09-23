@@ -1,5 +1,7 @@
 import 'package:bk_pos/features/cashier/presentation/input_decoration.dart';
+import 'package:bk_pos/features/cashier/presentation/widgets/wilayah_search_field.dart';
 import 'package:bk_pos/features/cashier/provider/customer_provider.dart';
+import 'package:bk_pos/features/cashier/provider/wilayah_provider.dart';
 import 'package:bk_pos/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -20,6 +22,9 @@ class _CustomerFormState extends ConsumerState<CustomerForm> {
   late final TextEditingController phoneController;
   late final TextEditingController addressController;
   late final TextEditingController pointController;
+
+  late final TextEditingController wilayahController;
+
   Timer? _debounce;
 
   @override
@@ -31,6 +36,8 @@ class _CustomerFormState extends ConsumerState<CustomerForm> {
     phoneController = TextEditingController();
     addressController = TextEditingController();
     pointController = TextEditingController();
+
+    wilayahController = TextEditingController();
   }
 
   @override
@@ -43,6 +50,8 @@ class _CustomerFormState extends ConsumerState<CustomerForm> {
     addressController.dispose();
     pointController.dispose();
 
+    wilayahController.dispose();
+
     super.dispose();
   }
 
@@ -51,7 +60,6 @@ class _CustomerFormState extends ConsumerState<CustomerForm> {
 
     if (value.trim().length < 2) {
       ref.read(customerProvider.notifier).hideCustomerResult();
-
       return;
     }
 
@@ -60,13 +68,18 @@ class _CustomerFormState extends ConsumerState<CustomerForm> {
     });
   }
 
+  void _searchWilayah(String value) {
+    ref.read(wilayahProvider.notifier).search(value);
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(customerProvider);
-
     final notifier = ref.read(customerProvider.notifier);
 
-    /// sync controller ketika customer dipilih
+    final wilayahState = ref.watch(wilayahProvider);
+    final wilayahNotifier = ref.read(wilayahProvider.notifier);
+
     nameController.text = state.customer.name;
     phoneController.text = state.customer.phone;
     addressController.text = state.customer.address;
@@ -137,12 +150,12 @@ class _CustomerFormState extends ConsumerState<CustomerForm> {
 
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
+                  borderSide: BorderSide(color: AppColors.dark),
                 ),
 
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
+                  borderSide: BorderSide(color: AppColors.dark),
                 ),
 
                 focusedBorder: OutlineInputBorder(
@@ -156,7 +169,6 @@ class _CustomerFormState extends ConsumerState<CustomerForm> {
               },
             ),
 
-            /// RESULT
             if (state.showResult && state.customers.isNotEmpty)
               Container(
                 margin: const EdgeInsets.only(top: 4),
@@ -186,19 +198,6 @@ class _CustomerFormState extends ConsumerState<CustomerForm> {
                         ),
                         child: Row(
                           children: [
-                            CircleAvatar(
-                              radius: 22,
-                              backgroundColor: Colors.blue.shade50,
-                              child: Text(
-                                customer.name.substring(0, 1).toUpperCase(),
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-
-                            const SizedBox(width: 12),
-
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -210,9 +209,15 @@ class _CustomerFormState extends ConsumerState<CustomerForm> {
                                       fontSize: 14,
                                     ),
                                   ),
-                                  const SizedBox(height: 3),
                                   Text(
                                     customer.phone,
+                                    style: TextStyle(
+                                      color: Colors.grey.shade600,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                  Text(
+                                    customer.address,
                                     style: TextStyle(
                                       color: Colors.grey.shade600,
                                       fontSize: 12,
@@ -232,7 +237,7 @@ class _CustomerFormState extends ConsumerState<CustomerForm> {
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: Text(
-                                "${customer.currentPoint} P",
+                                "${customer.currentPoint}",
                                 style: TextStyle(
                                   color: Colors.green.shade700,
                                   fontWeight: FontWeight.bold,
@@ -262,9 +267,8 @@ class _CustomerFormState extends ConsumerState<CustomerForm> {
                 ),
               ),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: 5),
 
-            /// NAMA
             TextField(
               controller: nameController,
               decoration: inputDecoration(
@@ -278,11 +282,10 @@ class _CustomerFormState extends ConsumerState<CustomerForm> {
 
             const SizedBox(height: 5),
 
-            /// HP
             TextField(
               controller: phoneController,
               decoration: inputDecoration(
-                label: "No HP",
+                label: "No HP (opsional)",
                 icon: LucideIcons.phone,
               ),
               onChanged: (v) {
@@ -290,9 +293,44 @@ class _CustomerFormState extends ConsumerState<CustomerForm> {
               },
             ),
 
+            const SizedBox(height: 12),
+
+            WilayahSearchField(
+              controller: wilayahController,
+              hierarchyLabel: wilayahState.hierarchyLabel,
+              searchHint: wilayahState.searchHint,
+              enabled: wilayahState.canSearch,
+              loading: wilayahState.loading,
+              results: wilayahState.results,
+              onChanged: _searchWilayah,
+
+              onSelected: (item) {
+                wilayahNotifier.select(item);
+                wilayahController.clear();
+                setState(() {});
+              },
+
+              onClear: () {
+                wilayahController.clear();
+                wilayahNotifier.clear();
+                setState(() {});
+              },
+
+              onUndo: () {
+                wilayahController.clear();
+                wilayahNotifier.clearLast();
+                setState(() {});
+              },
+
+              onReset: () {
+                wilayahController.clear();
+                wilayahNotifier.clear();
+                setState(() {});
+              },
+            ),
+
             const SizedBox(height: 5),
 
-            /// ALAMAT
             TextField(
               controller: addressController,
               decoration: inputDecoration(
@@ -304,9 +342,8 @@ class _CustomerFormState extends ConsumerState<CustomerForm> {
               },
             ),
 
-            const SizedBox(height: 5),
+            const SizedBox(height: 12),
 
-            /// POINT
             TextField(
               controller: pointController,
               keyboardType: TextInputType.number,

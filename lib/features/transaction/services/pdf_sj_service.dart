@@ -10,7 +10,6 @@ import 'package:printing/printing.dart';
 import 'package:bk_pos/model/transaction_detail_model.dart';
 
 class PdfSjService {
-  // Standard font seperti Microsoft Word
   static const double bodyFont = 12;
   static const double smallFont = 10;
   static const double subTitleFont = 14;
@@ -35,8 +34,7 @@ class PdfSjService {
 
     pdf.addPage(
       pw.MultiPage(
-        // pageFormat: PdfPageFormat.a4,
-        // margin: const pw.EdgeInsets.all(56),
+       
         pageFormat: sjPaper,
         margin: const pw.EdgeInsets.fromLTRB(20, 15, 20, 15),
         build: (context) {
@@ -138,7 +136,6 @@ class PdfSjService {
     return pw.Row(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
-        // LOGO
         pw.Container(
           width: 100,
           height: 50,
@@ -147,7 +144,6 @@ class PdfSjService {
 
         pw.SizedBox(width: 8),
 
-        // COMPANY
         pw.Expanded(
           child: pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -178,7 +174,6 @@ class PdfSjService {
 
         pw.SizedBox(width: 6),
 
-        // BOX PENGIRIMAN
         _infoBox(
           title: "Surat Jalan",
           width: 110,
@@ -209,7 +204,6 @@ class PdfSjService {
     return pw.Row(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
-        // CUSTOMER
         pw.Container(
           width: 220,
           padding: const pw.EdgeInsets.fromLTRB(4, 4, 4, 12),
@@ -249,7 +243,6 @@ class PdfSjService {
 
         pw.Spacer(),
 
-        // OPERATOR
         _infoBox(
           title: "Operator",
           width: 110,
@@ -312,7 +305,6 @@ class PdfSjService {
           ],
         ),
 
-        // TOTAL
         pw.Container(
           width: double.infinity,
 
@@ -345,7 +337,6 @@ class PdfSjService {
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.stretch,
       children: [
-        // KETERANGAN
         pw.Container(
           width: double.infinity,
           padding: const pw.EdgeInsets.all(4),
@@ -387,7 +378,6 @@ class PdfSjService {
 
         pw.SizedBox(height: 25),
 
-        // SIGNATURE
         pw.Row(
           children: [
             pw.Expanded(child: _signature("Gudang")),

@@ -12,6 +12,7 @@ import 'package:bk_pos/model/transaction_detail_model.dart';
 import 'package:bk_pos/utils/app_toast.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../data/transaction_repository.dart';
 
@@ -101,11 +102,13 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
     }
 
     final trx = transaction!;
-    final showPaymentButton =
-        trx.paymentStatus.toLowerCase() == "partial" ||
-        trx.paymentStatus.toLowerCase() == "unpaid";
+    final paymentStatus = trx.paymentStatus.toLowerCase();
 
-    final showAddProduct = trx.paymentStatus.toLowerCase() == "unpaid";
+    final showAddProduct = paymentStatus == "unpaid";
+
+    final canPrintReceipt =
+        paymentStatus == "partial" || paymentStatus == "paid";
+    final canSJ = paymentStatus == "paid";
 
     return Scaffold(
       backgroundColor: const Color(0xffF5F7FA),
@@ -168,14 +171,14 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                   }
                 },
               ),
-           
-            if (!showPaymentButton)
+
+            if (canPrintReceipt)
               Row(
                 children: [
                   Expanded(
                     child: PaymentButton(
                       title: "Cetak Nota",
-                      icon: Icons.receipt_long,
+                      icon: LucideIcons.receiptText,
                       onPressed: () {
                         Navigator.push(
                           context,
@@ -187,27 +190,28 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                       },
                     ),
                   ),
-                  Expanded(
-                    child: PaymentButton(
-                      title: "Surat Jalan",
-                      icon: Icons.receipt_long,
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => PreviewSjScreen(transaction: trx),
-                          ),
-                        );
-                      },
+                  if (canSJ) ...[
+                    Expanded(
+                      child: PaymentButton(
+                        title: "Surat Jalan",
+                        icon: LucideIcons.fileText,
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => PreviewSjScreen(transaction: trx),
+                            ),
+                          );
+                        },
+                      ),
                     ),
-                  ),
+                  ],
                 ],
               ),
 
-            // if (!showPaymentButton)
             PaymentButton(
               title: "Tambah Pembayaran",
-              icon: Icons.payments_rounded,
+              icon: LucideIcons.banknote,
               onPressed: openPaymentSheet,
             ),
           ],

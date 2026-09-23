@@ -1,6 +1,8 @@
 import 'package:bk_pos/features/customer/presentation/customer_screen.dart';
 import 'package:bk_pos/features/profile/presentation/chart_painter.dart';
+import 'package:bk_pos/features/profile/presentation/payment_chart_painter.dart';
 import 'package:bk_pos/features/profile/provider/profile_provider.dart';
+import 'package:bk_pos/model/user_model.dart';
 import 'package:bk_pos/utils/app_colors.dart';
 import 'package:bk_pos/utils/format_rupiah.dart';
 import 'package:flutter/material.dart';
@@ -22,6 +24,12 @@ class ProfileScreen extends ConsumerWidget {
 
     final user = state.user;
 
+    if (user == null) {
+      return const Scaffold(
+        body: Center(child: Text('Data user tidak ditemukan')),
+      );
+    }
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -33,11 +41,10 @@ class ProfileScreen extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                /// HEADER
                 Row(
                   children: [
                     const CircleAvatar(
-                      radius: 24,
+                      radius: 20,
                       backgroundColor: AppColors.primary,
                       child: Icon(LucideIcons.store, color: AppColors.light),
                     ),
@@ -47,16 +54,11 @@ class ProfileScreen extends ConsumerWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          Text(user.userName, style: TextStyle(fontSize: 13)),
                           Text(
-                            user?.userName ?? "-",
-                            style: TextStyle(
-                              fontSize: 16,
-                            ),
-                          ),
-                          Text(
-                            user?.storeName ?? "-",
+                            user.storeView,
                             style: const TextStyle(
-                              fontSize: 18,
+                              fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -64,19 +66,40 @@ class ProfileScreen extends ConsumerWidget {
                       ),
                     ),
 
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: AppColors.light,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.dark.withValues(alpha: .15),
-                            blurRadius: 10,
+                    IconButton(
+                      onPressed: () async {
+                        final confirm = await showDialog<bool>(
+                          context: context,
+                          builder: (_) => AlertDialog(
+                            title: const Text("Logout"),
+                            content: const Text("Apakah yakin ingin logout?"),
+                            actions: [
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.pop(context, false);
+                                },
+                                child: const Text("Batal"),
+                              ),
+                              ElevatedButton(
+                                onPressed: () {
+                                  Navigator.pop(context, true);
+                                },
+                                child: const Text("Logout"),
+                              ),
+                            ],
                           ),
-                        ],
+                        );
+
+                        if (confirm == true) {
+                          await ref.read(authProvider.notifier).logout();
+                        }
+                      },
+                      style: IconButton.styleFrom(
+                        backgroundColor: AppColors.light,
+                        padding: const EdgeInsets.all(10),
+                        shape: const CircleBorder(),
                       ),
-                      child: const Icon(LucideIcons.bell),
+                      icon: const Icon(LucideIcons.logOut, size: 20),
                     ),
                   ],
                 ),
@@ -102,31 +125,19 @@ class ProfileScreen extends ConsumerWidget {
                         colors: [AppColors.primary, AppColors.secondary],
                       ),
                     ),
-                    // decoration: BoxDecoration(
-                    //   borderRadius: BorderRadius.circular(12),
-                    //   gradient: const LinearGradient(
-                    //     begin: Alignment.centerLeft,
-                    //     end: Alignment.centerRight,
-                    //     colors: [
-                    //       AppColors.primary,
-                    //       AppColors.light,
-                    //       AppColors.secondary,
-                    //     ],
-                    //     stops: [0.0, 0.5, 1.0],
-                    //   ),
-                    // ),
+
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          "Omzet Bulan Ini - Dummy chart",
-                          style: TextStyle(color: Colors.white70),
+                        Text(
+                          "Omzet Bulanan tahun ${DateTime.now().year}",
+                          style: const TextStyle(color: Colors.white70),
                         ),
 
                         const SizedBox(height: 10),
 
                         Text(
-                          formatRupiah(user?.monthSales ?? 0),
+                          formatRupiah(user.monthSales),
                           style: const TextStyle(
                             color: AppColors.light,
                             fontSize: 32,
@@ -145,9 +156,9 @@ class ProfileScreen extends ConsumerWidget {
                             color: AppColors.light.withValues(alpha: .5),
                             borderRadius: BorderRadius.circular(20),
                           ),
-                          child: const Text(
-                            "+15% dari bulan lalu",
-                            style: TextStyle(
+                          child: Text(
+                            notifier.monthlyGrowthText(user),
+                            style: const TextStyle(
                               color: AppColors.light,
                               fontSize: 12,
                             ),
@@ -159,7 +170,9 @@ class ProfileScreen extends ConsumerWidget {
                         SizedBox(
                           width: double.infinity,
                           height: 140,
-                          child: CustomPaint(painter: ChartPainter()),
+                          child: CustomPaint(
+                            painter: ChartPainter(data: user.monthlySales),
+                          ),
                         ),
                       ],
                     ),
@@ -177,35 +190,37 @@ class ProfileScreen extends ConsumerWidget {
                   childAspectRatio: 1.25,
                   children: [
                     _statCard(
-                      Icons.flag,
+                      LucideIcons.flag,
                       "Target Bulan Ini",
-                      formatRupiah(user?.targetAmount ?? 0),
+                      formatRupiah(user.targetAmount),
                       Colors.orange,
                     ),
 
                     _statCard(
-                      Icons.bar_chart,
+                      LucideIcons.chartColumn,
                       "Omzet Bulan Ini",
-                      formatRupiah(user?.monthSales ?? 0),
+                      formatRupiah(user.monthSales),
                       Colors.blue,
                     ),
 
                     _statCard(
-                      Icons.attach_money,
+                      LucideIcons.circleDollarSign,
                       "Omzet Hari Ini",
-                      formatRupiah(user?.todaySales ?? 0),
+                      formatRupiah(user.todaySales),
                       Colors.green,
                     ),
 
                     _statCard(
-                      Icons.receipt_long,
+                      LucideIcons.receiptText,
                       "Transaksi Hari Ini",
-                      "${user?.todayTransaction ?? 0}",
+                      "${user.todayTransaction}",
                       Colors.red,
                     ),
                   ],
                 ),
 
+                const SizedBox(height: 20),
+                _paymentSummaryCard(user),
                 const SizedBox(height: 25),
 
                 ElevatedButton.icon(
@@ -215,49 +230,11 @@ class ProfileScreen extends ConsumerWidget {
                       MaterialPageRoute(builder: (_) => const CustomerScreen()),
                     );
                   },
-                  icon: const Icon(Icons.people),
+                  icon: const Icon(LucideIcons.contact),
                   label: const Text("Daftar Customer"),
                   style: ElevatedButton.styleFrom(
                     minimumSize: const Size(double.infinity, 55),
                     backgroundColor: AppColors.secondary,
-                    foregroundColor: AppColors.light,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 15),
-
-                ElevatedButton.icon(
-                  onPressed: () async {
-                    final confirm = await showDialog<bool>(
-                      context: context,
-                      builder: (_) => AlertDialog(
-                        title: const Text("Logout"),
-                        content: const Text("Apakah yakin ingin logout?"),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context, false),
-                            child: const Text("Batal"),
-                          ),
-                          ElevatedButton(
-                            onPressed: () => Navigator.pop(context, true),
-                            child: const Text("Logout"),
-                          ),
-                        ],
-                      ),
-                    );
-
-                    if (confirm == true) {
-                      await ref.read(authProvider.notifier).logout();
-                    }
-                  },
-                  icon: const Icon(Icons.logout),
-                  label: const Text("Logout"),
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: const Size(double.infinity, 55),
-                    backgroundColor: AppColors.primary,
                     foregroundColor: AppColors.light,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
@@ -271,6 +248,173 @@ class ProfileScreen extends ConsumerWidget {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _paymentSummaryCard(UserModel user) {
+    final payment = user.todayPayment;
+
+    final total = payment.total;
+
+    double percentage(double value) {
+      if (total <= 0) return 0;
+      return (value / total) * 100;
+    }
+
+    return Card(
+      margin: EdgeInsets.zero,
+      color: AppColors.light,
+      surfaceTintColor: AppColors.light,
+      elevation: 2,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: AppColors.muted, width: 1),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Pembayaran Hari Ini',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+
+            const SizedBox(height: 5),
+
+            Text(
+              'Berdasarkan pembayaran yang diterima hari ini',
+              style: TextStyle(color: AppColors.faded, fontSize: 12),
+            ),
+
+            const SizedBox(height: 20),
+
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                SizedBox(
+                  width: 150,
+                  height: 150,
+                  child: CustomPaint(
+                    painter: PaymentChartPainter(
+                      cash: payment.cash,
+                      transfer: payment.transfer,
+                      qris: payment.qris,
+                    ),
+                  ),
+                ),
+
+                const SizedBox(width: 20),
+
+                Expanded(
+                  child: Column(
+                    children: [
+                      _paymentItem(
+                        title: 'Cash',
+                        amount: payment.cash,
+                        percentage: percentage(payment.cash),
+                        color: Colors.orange,
+                      ),
+
+                      const SizedBox(height: 15),
+
+                      _paymentItem(
+                        title: 'Transfer',
+                        amount: payment.transfer,
+                        percentage: percentage(payment.transfer),
+                        color: Colors.blue,
+                      ),
+
+                      const SizedBox(height: 15),
+
+                      _paymentItem(
+                        title: 'QRIS',
+                        amount: payment.qris,
+                        percentage: percentage(payment.qris),
+                        color: Colors.green,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 20),
+
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: AppColors.background,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Total Terbayar',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  Text(
+                    formatRupiah(total),
+                    style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _paymentItem({
+    required String title,
+    required double amount,
+    required double percentage,
+    required Color color,
+  }) {
+    return Row(
+      children: [
+        Container(
+          width: 11,
+          height: 11,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+
+        const SizedBox(width: 8),
+
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                ),
+              ),
+
+              const SizedBox(height: 2),
+
+              Text(
+                formatRupiah(amount),
+                style: TextStyle(color: AppColors.faded, fontSize: 11),
+              ),
+            ],
+          ),
+        ),
+
+        Text(
+          '${percentage.toStringAsFixed(1)}%',
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+        ),
+      ],
     );
   }
 

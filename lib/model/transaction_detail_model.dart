@@ -31,6 +31,7 @@ class TransactionDetailModel {
   final double subtotal;
   final double shippingCost;
   final double pointsUsed;
+  final double nego;
   final double total;
   final double remainingAmount;
 
@@ -64,6 +65,7 @@ class TransactionDetailModel {
     required this.subtotal,
     required this.shippingCost,
     required this.pointsUsed,
+    required this.nego,
     required this.total,
     required this.remainingAmount,
   });
@@ -90,6 +92,7 @@ class TransactionDetailModel {
       storeEmail: json['store']?['email'],
       storePhone: json['store']?['phone'],
 
+
       companyName: json['company']?['name'],
       companyAddress: json['company']?['address'],
 
@@ -104,6 +107,7 @@ class TransactionDetailModel {
       subtotal: double.tryParse(json['subtotal'].toString()) ?? 0,
       shippingCost: double.tryParse(json['shipping_cost'].toString()) ?? 0,
       pointsUsed: double.tryParse(json['points_used'].toString()) ?? 0,
+      nego: double.tryParse(json['nego'].toString()) ?? 0,
       total: double.tryParse(json['total'].toString()) ?? 0,
       remainingAmount:
           double.tryParse(json['remaining_amount'].toString()) ?? 0,

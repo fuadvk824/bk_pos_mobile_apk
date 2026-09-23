@@ -31,7 +31,7 @@ class AppToast {
     String? description,
   }) {
     toastification.showCustom(
-      autoCloseDuration: const Duration(seconds: 2),
+      autoCloseDuration: const Duration(milliseconds: 1250),
       animationDuration: const Duration(milliseconds: 300),
       alignment: Alignment.topRight,
       direction: TextDirection.ltr,

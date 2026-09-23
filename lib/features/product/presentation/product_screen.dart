@@ -25,6 +25,7 @@ class ProductScreen extends ConsumerWidget {
             MaterialPageRoute(builder: (_) => const ProductScanScreen()),
           );
         },
+       
         child: Icon(Icons.qr_code_scanner, size: 28, color: AppColors.dark),
       ),
 

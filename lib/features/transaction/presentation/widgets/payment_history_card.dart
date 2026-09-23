@@ -1,5 +1,6 @@
 import 'package:bk_pos/model/transaction_detail_model.dart';
 import 'package:bk_pos/utils/app_colors.dart';
+import 'package:bk_pos/utils/string_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -30,7 +31,6 @@ class PaymentHistoryCard extends StatelessWidget {
         padding: const EdgeInsets.all(12),
         child: Column(
           children: [
-            /// Header
             Row(
               children: const [
                 Icon(LucideIcons.wallet, color: AppColors.secondary, size: 20),
@@ -99,7 +99,7 @@ class PaymentHistoryCard extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  "${payment.paymentMethod} • ${payment.cashierName ?? "-"}",
+                                  "${StringHelper.titleCase(payment.paymentMethod)} • ${payment.cashierName ?? "-"}",
 
                                   style: const TextStyle(
                                     fontSize: 14,
@@ -108,7 +108,7 @@ class PaymentHistoryCard extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
-                                  payment.paidAt ?? "",
+                                  payment.paidAt ?? "-",
                                   style: TextStyle(
                                     fontSize: 11,
                                     color: Colors.grey.shade600,

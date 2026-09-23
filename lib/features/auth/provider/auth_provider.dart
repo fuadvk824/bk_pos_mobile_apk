@@ -35,7 +35,6 @@ class AuthNotifier extends StateNotifier<AsyncValue<UserModel?>> {
 
       state = AsyncValue.data(user);
 
-      // Mulai monitor token
       _startTokenExpiryTimer();
 
       return null;
@@ -50,7 +49,6 @@ class AuthNotifier extends StateNotifier<AsyncValue<UserModel?>> {
 
   Future<void> loadUser() async {
     try {
-      // Pastikan token masih valid sebelum request /users
       if (TokenManager.token == null || TokenManager.isExpired) {
         await TokenManager.clear();
 
@@ -62,7 +60,6 @@ class AuthNotifier extends StateNotifier<AsyncValue<UserModel?>> {
 
       state = AsyncValue.data(user);
 
-      // Mulai monitor token
       _startTokenExpiryTimer();
     } catch (_) {
       await TokenManager.clear();
@@ -112,66 +109,4 @@ class AuthNotifier extends StateNotifier<AsyncValue<UserModel?>> {
     super.dispose();
   }
 }
-
-// import 'package:flutter_riverpod/flutter_riverpod.dart';
-// import '../../../model/user_model.dart';
-// import '../data/auth_repository.dart';
-
-// final authRepositoryProvider = Provider<AuthRepository>(
-//   (ref) => AuthRepository(),
-// );
-
-// final authLoadingProvider = StateProvider<bool>((ref) => false);
-
-// final authProvider =
-//     StateNotifierProvider<AuthNotifier, AsyncValue<UserModel?>>(
-//       (ref) => AuthNotifier(ref.read(authRepositoryProvider), ref),
-//     );
-
-// class AuthNotifier extends StateNotifier<AsyncValue<UserModel?>> {
-//   final AuthRepository repo;
-//   final Ref ref;
-
-//   AuthNotifier(this.repo, this.ref) : super(const AsyncValue.loading()) {
-//     loadUser();
-//   }
-
-//   Future<String?> login(String login, String password) async {
-//     // Hanya loading tombol login
-//     ref.read(authLoadingProvider.notifier).state = true;
-
-//     try {
-//       final user = await repo.login(login, password);
-
-//       // Login berhasil
-//       state = AsyncValue.data(user);
-
-//       return null;
-//     } catch (e) {
-//       // Jangan gunakan AsyncValue.error
-//       // supaya AppRouter tidak menampilkan halaman error.
-//       state = const AsyncValue.data(null);
-
-//       return e.toString().replaceFirst('Exception: ', '');
-//     } finally {
-//       // Request selesai
-//       ref.read(authLoadingProvider.notifier).state = false;
-//     }
-//   }
-
-//   Future<void> loadUser() async {
-//     try {
-//       final user = await repo.me();
-
-//       state = AsyncValue.data(user);
-//     } catch (_) {
-//       state = const AsyncValue.data(null);
-//     }
-//   }
-
-//   Future<void> logout() async {
-//     await repo.logout();
-
-//     state = const AsyncValue.data(null);
-//   }
-// }
+ 

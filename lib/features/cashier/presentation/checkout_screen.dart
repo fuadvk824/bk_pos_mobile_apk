@@ -7,6 +7,7 @@ import 'package:bk_pos/utils/app_colors.dart';
 import 'package:bk_pos/utils/app_toast.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 class CheckoutScreen extends ConsumerWidget {
   const CheckoutScreen({super.key});
@@ -29,17 +30,24 @@ class CheckoutScreen extends ConsumerWidget {
         ),
       ),
 
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-        children: const [
-          CustomerForm(),
-          SizedBox(height: 12),
-          DeliveryForm(),
-          SizedBox(height: 12),
-          PaymentForm(),
-          SizedBox(height: 12),
-          CheckoutSummary(),
-        ],
+      body: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTap: () {
+          FocusScope.of(context).unfocus();
+        },
+        child: ListView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+          children: const [
+            CustomerForm(),
+            SizedBox(height: 12),
+            DeliveryForm(),
+            SizedBox(height: 12),
+            PaymentForm(),
+            SizedBox(height: 12),
+            CheckoutSummary(),
+          ],
+        ),
       ),
 
       bottomNavigationBar: SafeArea(
@@ -60,7 +68,6 @@ class CheckoutScreen extends ConsumerWidget {
             height: 56,
             width: double.infinity,
             child: ElevatedButton.icon(
-             
               onPressed: state.isLoading
                   ? null
                   : () async {
@@ -91,7 +98,7 @@ class CheckoutScreen extends ConsumerWidget {
                         color: Colors.white,
                       ),
                     )
-                  : const Icon(Icons.save_rounded),
+                  : const Icon(LucideIcons.save),
               label: Text(
                 state.isLoading ? "Menyimpan..." : "Simpan Transaksi",
                 style: const TextStyle(

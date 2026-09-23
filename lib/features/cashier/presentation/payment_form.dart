@@ -17,6 +17,7 @@ class PaymentForm extends ConsumerStatefulWidget {
 
 class _PaymentFormState extends ConsumerState<PaymentForm> {
   late final TextEditingController dpController;
+  late final TextEditingController negoController;
 
   @override
   void initState() {
@@ -29,17 +30,15 @@ class _PaymentFormState extends ConsumerState<PaymentForm> {
           ? ''
           : formatRupiah(payment.paymentAmount),
     );
+    negoController = TextEditingController(
+      text: payment.nego == 0 ? '' : formatRupiah(payment.nego),
+    );
   }
-
-  // @override
-  // void initState() {
-  //   super.initState();
-  //   dpController = TextEditingController();
-  // }
 
   @override
   void dispose() {
     dpController.dispose();
+    negoController.dispose();
     super.dispose();
   }
 
@@ -49,18 +48,10 @@ class _PaymentFormState extends ConsumerState<PaymentForm> {
     final notifier = ref.read(paymentProvider.notifier);
     final checkout = ref.read(checkoutProvider.notifier);
 
+    final totalBeforeNego =
+        checkout.subtotal + checkout.shipping - checkout.pointsUsed;
+
     final total = checkout.total;
-
-    // final text = state.payment.paymentAmount == 0
-    //     ? ""
-    //     : state.payment.paymentAmount.toInt().toString();
-
-    // if (dpController.text != text) {
-    //   dpController.text = text;
-    //   dpController.selection = TextSelection.fromPosition(
-    //     TextPosition(offset: dpController.text.length),
-    //   );
-    // }
 
     return Card(
       margin: EdgeInsets.zero,
@@ -97,8 +88,14 @@ class _PaymentFormState extends ConsumerState<PaymentForm> {
                 DropdownMenuItem(value: "partial", child: Text("DP")),
                 DropdownMenuItem(value: "paid", child: Text("Lunas")),
               ],
+              onTap: () {
+                FocusManager.instance.primaryFocus?.unfocus();
+              },
               onChanged: (v) {
-                if (v != null) notifier.updateStatus(v);
+                if (v != null) {
+                  FocusScope.of(context).unfocus();
+                  notifier.updateStatus(v);
+                }
               },
             ),
 
@@ -118,39 +115,18 @@ class _PaymentFormState extends ConsumerState<PaymentForm> {
                   DropdownMenuItem(value: "transfer", child: Text("Transfer")),
                   DropdownMenuItem(value: "qris", child: Text("QRIS")),
                 ],
+                onTap: () {
+                  FocusManager.instance.primaryFocus?.unfocus();
+                },
                 onChanged: (v) {
-                  if (v != null) notifier.updateMethod(v);
+                  if (v != null) {
+                    FocusScope.of(context).unfocus();
+                    notifier.updateMethod(v);
+                  }
                 },
               ),
             ],
 
-            // if (state.payment.paymentStatus == "partial") ...[
-            //   const SizedBox(height: 12),
-
-            //   TextField(
-            //     controller: dpController,
-            //     keyboardType: TextInputType.number,
-            //     decoration: inputDecoration(
-            //       label: "Nominal DP",
-            //       icon: LucideIcons.handCoins,
-            //     ),
-            //     onChanged: (v) {
-            //       double amount = double.tryParse(v) ?? 0;
-
-            //       if (amount > total) {
-            //         amount = total;
-
-            //         dpController.text = amount.toInt().toString();
-
-            //         dpController.selection = TextSelection.fromPosition(
-            //           TextPosition(offset: dpController.text.length),
-            //         );
-            //       }
-
-            //       notifier.updateAmount(amount, total);
-            //     },
-            //   ),
-            // ],
             if (state.payment.paymentStatus == "partial") ...[
               const SizedBox(height: 12),
 
@@ -190,9 +166,40 @@ class _PaymentFormState extends ConsumerState<PaymentForm> {
               ),
             ],
 
+            const SizedBox(height: 12),
+            TextField(
+              controller: negoController,
+              keyboardType: TextInputType.number,
+              onTap: () {
+                negoController.selection = TextSelection(
+                  baseOffset: 0,
+                  extentOffset: negoController.text.length,
+                );
+              },
+              decoration: inputDecoration(
+                label: "Diskon/Nego",
+                icon: LucideIcons.percent,
+              ),
+              onChanged: (value) {
+                double amount = parseRupiah(value);
+                if (amount > totalBeforeNego) {
+                  amount = totalBeforeNego;
+                }
+                notifier.updateNego(amount, totalBeforeNego);
+                final formatted = amount == 0 ? "" : formatRupiah(amount);
+                if (negoController.text != formatted) {
+                  negoController.value = TextEditingValue(
+                    text: formatted,
+                    selection: TextSelection.collapsed(
+                      offset: formatted.length,
+                    ),
+                  );
+                }
+              },
+            ),
+
             if (state.payment.paymentStatus == "paid") ...[
               const SizedBox(height: 16),
-
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(14),
@@ -207,7 +214,7 @@ class _PaymentFormState extends ConsumerState<PaymentForm> {
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        "Pembayaran penuh\nRp ${checkout.total.toInt()}",
+                        "Pembayaran Penuh\n${formatRupiah(checkout.total)}",
                         style: TextStyle(
                           color: Colors.green.shade800,
                           fontWeight: FontWeight.bold,

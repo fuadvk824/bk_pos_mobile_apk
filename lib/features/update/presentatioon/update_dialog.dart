@@ -1,11 +1,12 @@
 import 'package:bk_pos/model/app_version_model.dart';
 import 'package:flutter/material.dart';
+
 import '../../../utils/app_colors.dart';
+import '../../../utils/app_toast.dart';
 import '../service/update_service.dart';
 
 class UpdateDialog extends StatefulWidget {
   final String currentVersion;
-  // final dynamic latest;
   final AppVersionModel latest;
   final UpdateService updateService;
 
@@ -23,6 +24,46 @@ class UpdateDialog extends StatefulWidget {
 class _UpdateDialogState extends State<UpdateDialog> {
   double progress = 0;
   bool isDownloading = false;
+
+  Future<void> _downloadUpdate() async {
+    if (isDownloading) {
+      return;
+    }
+
+    setState(() {
+      isDownloading = true;
+      progress = 0;
+    });
+
+    try {
+      await widget.updateService.downloadAndInstall(
+        widget.latest.apkUrl,
+        onProgress: (value) {
+          if (!mounted) {
+            return;
+          }
+
+          setState(() {
+            progress = value;
+          });
+        },
+      );
+    } catch (e) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        isDownloading = false;
+        progress = 0;
+      });
+
+      AppToast.error(
+        title: 'Update Gagal',
+        description: 'Gagal mengunduh update: $e',
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -55,7 +96,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
               const SizedBox(height: 20),
 
               Text(
-                isDownloading ? "Mengunduh Update..." : "Update Aplikasi",
+                isDownloading ? 'Mengunduh Update...' : 'Update Aplikasi',
                 style: const TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
@@ -75,7 +116,8 @@ class _UpdateDialogState extends State<UpdateDialog> {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    "v${widget.currentVersion} → v${widget.latest.version}",
+                    'v${widget.currentVersion} → '
+                    'v${widget.latest.version}',
                     style: TextStyle(
                       color: AppColors.primary,
                       fontWeight: FontWeight.w600,
@@ -87,7 +129,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
 
               if (!isDownloading)
                 Text(
-                  widget.latest.message ?? "Versi terbaru aplikasi tersedia.",
+                  widget.latest.message ?? 'Versi terbaru aplikasi tersedia.',
                   textAlign: TextAlign.center,
                 ),
 
@@ -101,7 +143,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
                 const SizedBox(height: 12),
 
                 Text(
-                  "${(progress * 100).toStringAsFixed(0)}%",
+                  '${(progress * 100).toStringAsFixed(0)}%',
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -115,23 +157,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
                 width: double.infinity,
                 height: 52,
                 child: ElevatedButton.icon(
-                  onPressed: isDownloading
-                      ? null
-                      : () async {
-                          setState(() {
-                            isDownloading = true;
-                          });
-
-                          await widget.updateService.downloadAndInstall(
-                            widget.latest.apkUrl,
-                            onProgress: (value) {
-                              setState(() {
-                                progress = value;
-                              });
-                            },
-                          );
-                        
-                        },
+                  onPressed: isDownloading ? null : _downloadUpdate,
                   icon: isDownloading
                       ? const SizedBox(
                           width: 18,
@@ -143,7 +169,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
                         )
                       : const Icon(Icons.download_rounded, color: Colors.white),
                   label: Text(
-                    isDownloading ? "Mengunduh..." : "Update Sekarang",
+                    isDownloading ? 'Mengunduh...' : 'Update Sekarang',
                   ),
                 ),
               ),
@@ -151,7 +177,8 @@ class _UpdateDialogState extends State<UpdateDialog> {
               const SizedBox(height: 12),
 
               Text(
-                "Update diperlukan untuk melanjutkan penggunaan aplikasi.",
+                'Update diperlukan untuk melanjutkan '
+                'penggunaan aplikasi.',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
               ),

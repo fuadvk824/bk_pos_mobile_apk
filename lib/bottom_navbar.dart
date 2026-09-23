@@ -28,8 +28,8 @@ class _BottomNavbarState extends ConsumerState<BottomNavbar> {
 
   final List<Map<String, dynamic>> _items = const [
     {"icon": LucideIcons.package, "label": "Product"},
-    {"icon": LucideIcons.logs, "label": "Transaction"},
-    {"icon": LucideIcons.filePenLine, "label": "Purchase Order"},
+    {"icon": LucideIcons.notebookText, "label": "Transaction"},
+    {"icon": LucideIcons.filePenLine, "label": "PO"},
     {"icon": LucideIcons.banknoteArrowUp, "label": "Settlement"},
     {"icon": LucideIcons.user, "label": "Profile"},
   ];

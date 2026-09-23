@@ -1,6 +1,7 @@
 import 'package:bk_pos/features/cashier/presentation/checkout_screen.dart';
+import 'package:bk_pos/features/cashier/presentation/widgets/cashier_bottom_total.dart';
+import 'package:bk_pos/features/cashier/presentation/widgets/cashier_cart_item.dart';
 import 'package:bk_pos/features/cashier/provider/cart_provider.dart';
-import 'package:bk_pos/features/cashier/provider/checkout_provider.dart';
 import 'package:bk_pos/model/cart_item_model.dart';
 import 'package:bk_pos/utils/app_colors.dart';
 import 'package:bk_pos/utils/format_rupiah.dart';
@@ -15,575 +16,467 @@ class CashierScreen extends ConsumerStatefulWidget {
 }
 
 class _CashierScreenState extends ConsumerState<CashierScreen> {
-  final Map<int, TextEditingController> priceControllers = {};
+  final Map<int, TextEditingController> _qtyControllers = {};
+  final Map<int, TextEditingController> _packageQtyControllers = {};
+  final Map<int, TextEditingController> _packageSizeControllers = {};
+  final Map<int, TextEditingController> _packagePriceControllers = {};
+  final Map<int, TextEditingController> _retailPriceControllers = {};
 
-  TextEditingController controllerFor(CartItemModel item) {
-    return priceControllers.putIfAbsent(
-      item.product.id,
-      () => TextEditingController(text: item.sellingPrice.toInt().toString()),
-    );
-  }
+  final Map<int, FocusNode> _qtyFocusNodes = {};
+  final Map<int, FocusNode> _packageQtyFocusNodes = {};
+  final Map<int, FocusNode> _packageSizeFocusNodes = {};
+  final Map<int, FocusNode> _packagePriceFocusNodes = {};
+  final Map<int, FocusNode> _retailPriceFocusNodes = {};
 
   @override
   void dispose() {
-    for (final c in priceControllers.values) {
-      c.dispose();
+    for (final controller in _packageSizeControllers.values) {
+      controller.dispose();
     }
+    for (final controller in _qtyControllers.values) {
+      controller.dispose();
+    }
+
+    for (final controller in _packageQtyControllers.values) {
+      controller.dispose();
+    }
+
+    for (final controller in _packagePriceControllers.values) {
+      controller.dispose();
+    }
+
+    for (final controller in _retailPriceControllers.values) {
+      controller.dispose();
+    }
+
+    for (final node in _packageSizeFocusNodes.values) {
+      node.dispose();
+    }
+
+    for (final node in _qtyFocusNodes.values) {
+      node.dispose();
+    }
+
+    for (final node in _packageQtyFocusNodes.values) {
+      node.dispose();
+    }
+
+    for (final node in _packagePriceFocusNodes.values) {
+      node.dispose();
+    }
+
+    for (final node in _retailPriceFocusNodes.values) {
+      node.dispose();
+    }
+
     super.dispose();
+  }
+
+  TextEditingController _qtyController(CartItemModel item) {
+    final controller = _qtyControllers.putIfAbsent(
+      item.product.id,
+      () => TextEditingController(text: item.qty.toString()),
+    );
+
+    _syncController(
+      controller,
+      item.qty.toString(),
+      _qtyFocusNode(item.product.id),
+    );
+
+    return controller;
+  }
+
+  TextEditingController _packageQtyController(CartItemModel item) {
+    final controller = _packageQtyControllers.putIfAbsent(
+      item.product.id,
+      () => TextEditingController(text: item.packageCount.toString()),
+    );
+
+    _syncController(
+      controller,
+      item.packageCount.toString(),
+      _packageQtyFocusNode(item.product.id),
+    );
+
+    return controller;
+  }
+
+  TextEditingController _packageSizeController(CartItemModel item) {
+    final value = item.packageSizeValue;
+
+    final controller = _packageSizeControllers.putIfAbsent(
+      item.product.id,
+      () => TextEditingController(text: value > 0 ? value.toString() : ''),
+    );
+
+    _syncController(
+      controller,
+      value > 0 ? value.toString() : '',
+      _packageSizeFocusNode(item.product.id),
+    );
+
+    return controller;
+  }
+
+  TextEditingController _packagePriceController(CartItemModel item) {
+    final controller = _packagePriceControllers.putIfAbsent(
+      item.product.id,
+      () => TextEditingController(
+        text: formatRupiahInput(item.currentPackagePrice),
+      ),
+    );
+
+    final value = formatRupiahInput(item.currentPackagePrice);
+
+    _syncController(controller, value, _packagePriceFocusNode(item.product.id));
+
+    return controller;
+  }
+
+  TextEditingController _retailPriceController(CartItemModel item) {
+    final controller = _retailPriceControllers.putIfAbsent(
+      item.product.id,
+      () => TextEditingController(
+        text: formatRupiahInput(item.currentRetailPrice),
+      ),
+    );
+
+    final value = formatRupiahInput(item.currentRetailPrice);
+
+    _syncController(controller, value, _retailPriceFocusNode(item.product.id));
+
+    return controller;
+  }
+
+  FocusNode _qtyFocusNode(int productId) {
+    return _qtyFocusNodes.putIfAbsent(productId, FocusNode.new);
+  }
+
+  FocusNode _packageQtyFocusNode(int productId) {
+    return _packageQtyFocusNodes.putIfAbsent(productId, FocusNode.new);
+  }
+
+  FocusNode _packagePriceFocusNode(int productId) {
+    return _packagePriceFocusNodes.putIfAbsent(productId, FocusNode.new);
+  }
+
+  FocusNode _packageSizeFocusNode(int productId) {
+    return _packageSizeFocusNodes.putIfAbsent(productId, FocusNode.new);
+  }
+
+  FocusNode _retailPriceFocusNode(int productId) {
+    return _retailPriceFocusNodes.putIfAbsent(productId, FocusNode.new);
+  }
+
+  void _syncController(
+    TextEditingController controller,
+    String value,
+    FocusNode focusNode,
+  ) {
+    if (focusNode.hasFocus) {
+      return;
+    }
+
+    if (controller.text == value) {
+      return;
+    }
+
+    controller.value = TextEditingValue(
+      text: value,
+      selection: TextSelection.collapsed(offset: value.length),
+    );
+  }
+
+  void _updateQty(CartItemModel item, String value) {
+    final qty = int.tryParse(value);
+
+    if (qty == null || qty < 1) {
+      return;
+    }
+
+    final notifier = ref.read(cartProvider.notifier);
+
+    notifier.updateQty(item.product.id, qty);
+
+    // Kalau menggunakan harga bundle,
+    // jumlah bundle harus disesuaikan dengan qty baru.
+    if (item.usePackagePricing) {
+      final conv2 = item.packageSizeValue;
+
+      if (conv2 > 0) {
+        final maxBundle = qty ~/ conv2;
+        final currentBundleCount = item.packageCount;
+
+        if (currentBundleCount > maxBundle) {
+          notifier.setPackageQty(item.product.id, maxBundle);
+        }
+      }
+    }
+  }
+
+  void _increaseQty(CartItemModel item) {
+    final newQty = item.qty + 1;
+
+    _updateQty(item, newQty.toString());
+  }
+
+  void _decreaseQty(CartItemModel item) {
+    if (item.qty <= 1) {
+      return;
+    }
+
+    final newQty = item.qty - 1;
+
+    _updateQty(item, newQty.toString());
+  }
+
+  void _updatePackageQty(CartItemModel item, String value) {
+    final packageSize = item.packageSizeValue;
+
+    if (packageSize <= 0) {
+      return;
+    }
+
+    int packageCount = int.tryParse(value) ?? 0;
+
+    final maxPackageCount = item.qty ~/ packageSize;
+
+    packageCount = packageCount.clamp(0, maxPackageCount).toInt();
+
+    ref
+        .read(cartProvider.notifier)
+        .setPackageQty(item.product.id, packageCount);
+
+    final controller = _packageQtyControllers[item.product.id];
+
+    if (controller != null) {
+      final text = packageCount.toString();
+
+      if (controller.text != text) {
+        controller.value = TextEditingValue(
+          text: text,
+          selection: TextSelection.collapsed(offset: text.length),
+        );
+      }
+    }
+  }
+
+  void _updatePackageSize(CartItemModel item, String value) {
+    final packageSize = int.tryParse(value);
+
+    if (packageSize == null || packageSize < 1) {
+      return;
+    }
+
+    ref
+        .read(cartProvider.notifier)
+        .setPackageSize(item.product.id, packageSize);
+  }
+
+  void _updatePackagePrice(CartItemModel item, String value) {
+    final price = parseRupiah(value);
+
+    ref.read(cartProvider.notifier).setPackagePrice(item.product.id, price);
+  }
+
+  void _updateRetailPrice(CartItemModel item, String value) {
+    final price = parseRupiah(value);
+
+    ref.read(cartProvider.notifier).setRetailPrice(item.product.id, price);
+  }
+
+  void _togglePackagePricing(CartItemModel item, bool enabled) {
+    final notifier = ref.read(cartProvider.notifier);
+
+    if (!enabled) {
+      notifier.resetPackagePricing(item.product.id);
+      return;
+    }
+
+    notifier.setUsePackagePricing(item.product.id, true);
+  }
+
+  void _removeItem(CartItemModel item) {
+    ref.read(cartProvider.notifier).remove(item.product.id);
   }
 
   @override
   Widget build(BuildContext context) {
     final cart = ref.watch(cartProvider);
-    final cartNotifier = ref.read(cartProvider.notifier);
-    final checkoutNotifier = ref.read(checkoutProvider.notifier);
 
     return Scaffold(
+      backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
         elevation: 0,
         centerTitle: true,
         backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        foregroundColor: AppColors.dark,
         title: const Text(
-          "Keranjang Kasir",
+          'Keranjang Kasir',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
       body: Column(
         children: [
-          Container(height: 1, color: Colors.grey.shade300),
-
-          if (cart.isBackorder && cart.items.isNotEmpty)
-            Container(
-              width: double.infinity,
-              margin: const EdgeInsets.fromLTRB(12, 12, 12, 6),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.orange.shade50,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.orange.shade200),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.inventory_2_outlined,
-                    color: Colors.orange.shade700,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      "Transaksi Backorder — stok tidak akan dikurangi.",
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.orange.shade800,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+          if (cart.isBackorder) _buildBackorderBanner(),
 
           Expanded(
             child: cart.items.isEmpty
-                ? const Center(child: Text('Belum ada produk'))
-                : ListView.builder(
-                    itemCount: cart.items.length,
-                    itemBuilder: (context, index) {
-                      final item = cart.items[index];
-
-                      final controller = controllerFor(item);
-                      // final value = item.sellingPrice.toInt().toString();
-                      // if (controller.text != value) {
-                      //   controller.text = value;
-                      // }
-
-                      // if (!cart.isBackorder) {
-                      //   final value = item.sellingPrice.toInt().toString();
-
-                      //   if (controller.text != value) {
-                      //     controller.text = value;
-                      //   }
-                      // }
-                      return Stack(
-                        children: [
-                          Container(
-                            margin: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                            clipBehavior: Clip.hardEdge,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: item.stockError
-                                    ? Colors.red
-                                    : Colors.grey.shade300,
-                              ),
-                            ),
-                            child: Stack(
-                              children: [
-                                /// nomor pojok kanan
-                                Positioned(
-                                  right: 0,
-                                  top: 0,
-                                  child: ClipPath(
-                                    clipper: TriangleClipper(),
-                                    child: Container(
-                                      width: 42,
-                                      height: 42,
-                                      color: Colors.black,
-                                      child: Center(
-                                        child: Transform.translate(
-                                          offset: const Offset(
-                                            8,
-                                            -5,
-                                          ), // sesuaikan jika perlu
-                                          child: Text(
-                                            "${index + 1}",
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 11,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-
-                                Padding(
-                                  padding: const EdgeInsets.all(14),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        item.product.name,
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-
-                                      const SizedBox(height: 4),
-
-                                      Row(
-                                        children: [
-                                          const Text(
-                                            "Harga Jual",
-                                            style: TextStyle(
-                                              fontSize: 11,
-                                              color: Colors.grey,
-                                            ),
-                                          ),
-
-                                          const SizedBox(width: 6),
-
-                                          Text(
-                                            "(Harga asli: ${formatRupiah(item.product.finalPrice)})",
-                                            style: const TextStyle(
-                                              fontSize: 10,
-                                              color: Colors.blueGrey,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-
-                                      const SizedBox(height: 6),
-
-                                      SizedBox(
-                                        height: 42,
-                                        child: TextField(
-                                          controller: controller,
-                                          keyboardType:
-                                              const TextInputType.numberWithOptions(
-                                                decimal: false,
-                                              ),
-                                          textInputAction: TextInputAction.done,
-                                          decoration: InputDecoration(
-                                            prefixText: "Rp ",
-                                            hintText: "Masukkan harga",
-                                            contentPadding:
-                                                const EdgeInsets.symmetric(
-                                                  horizontal: 12,
-                                                ),
-                                            border: OutlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                            ),
-                                          ),
-                                          onChanged: (value) {
-                                            final price = double.tryParse(
-                                              value
-                                                  .replaceAll('.', '')
-                                                  .replaceAll(',', ''),
-                                            );
-
-                                            if (price == null) {
-                                              return;
-                                            }
-
-                                            cartNotifier.updatePrice(
-                                              item.product.id,
-                                              price,
-                                            );
-                                          },
-                                        ),
-                                      ),
-
-                                      if (cart.isBackorder)
-                                        const Padding(
-                                          padding: EdgeInsets.only(top: 4),
-                                          child: Text(
-                                            "Harga manual Backorder",
-                                            style: TextStyle(
-                                              fontSize: 10,
-                                              color: Colors.orange,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                        ),
-
-                                      // if (cart.isBackorder) ...[
-                                      //   const Text(
-                                      //     "Harga Jual",
-                                      //     style: TextStyle(
-                                      //       fontSize: 11,
-                                      //       color: Colors.grey,
-                                      //     ),
-                                      //   ),
-
-                                      //   const SizedBox(height: 6),
-
-                                      //   SizedBox(
-                                      //     height: 42,
-                                      //     child: TextField(
-                                      //       controller: controller,
-                                      //       keyboardType:
-                                      //           const TextInputType.numberWithOptions(
-                                      //             decimal: false,
-                                      //           ),
-                                      //       textInputAction:
-                                      //           TextInputAction.done,
-                                      //       decoration: InputDecoration(
-                                      //         prefixText: "Rp ",
-                                      //         hintText: "Masukkan harga",
-                                      //         contentPadding:
-                                      //             const EdgeInsets.symmetric(
-                                      //               horizontal: 12,
-                                      //             ),
-                                      //         border: OutlineInputBorder(
-                                      //           borderRadius:
-                                      //               BorderRadius.circular(8),
-                                      //         ),
-                                      //       ),
-                                      //       onChanged: (value) {
-                                      //         final price = double.tryParse(
-                                      //           value
-                                      //               .replaceAll('.', '')
-                                      //               .replaceAll(',', ''),
-                                      //         );
-
-                                      //         if (price == null) {
-                                      //           return;
-                                      //         }
-
-                                      //         cartNotifier.updatePrice(
-                                      //           item.product.id,
-                                      //           price,
-                                      //         );
-                                      //       },
-                                      //     ),
-                                      //   ),
-                                      // ] else if (item.product.discount > 0) ...[
-                                      //   Text(
-                                      //     "Rp ${item.product.price.toInt()}",
-                                      //     style: const TextStyle(
-                                      //       fontSize: 11,
-                                      //       color: Colors.grey,
-                                      //       decoration:
-                                      //           TextDecoration.lineThrough,
-                                      //     ),
-                                      //   ),
-
-                                      //   Text(
-                                      //     "Harga Diskon : ${formatRupiah(item.product.finalPrice)}",
-                                      //     style: const TextStyle(
-                                      //       fontSize: 11,
-                                      //       color: Colors.green,
-                                      //       fontWeight: FontWeight.bold,
-                                      //     ),
-                                      //   ),
-                                      // ] else
-                                      //   Text(
-                                      //     "Harga : ${formatRupiah(item.product.price)}",
-                                      //     style: const TextStyle(
-                                      //       fontSize: 11,
-                                      //       color: Colors.grey,
-                                      //     ),
-                                      //   ),
-                                      // if (cart.isBackorder)
-                                      //   const Padding(
-                                      //     padding: EdgeInsets.only(top: 4),
-                                      //     child: Text(
-                                      //       "Harga manual Backorder",
-                                      //       style: TextStyle(
-                                      //         fontSize: 10,
-                                      //         color: Colors.orange,
-                                      //         fontWeight: FontWeight.w600,
-                                      //       ),
-                                      //     ),
-                                      //   ),
-                                      const SizedBox(height: 18),
-
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          const Text("Quantity"),
-                                          Text(
-                                            "(Stok : ${item.product.stock})",
-                                            style: const TextStyle(
-                                              fontSize: 11,
-                                              color: Colors.grey,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-
-                                      const SizedBox(height: 8),
-
-                                      Row(
-                                        children: [
-                                          Expanded(
-                                            child: Container(
-                                              height: 42,
-                                              decoration: BoxDecoration(
-                                                border: Border.all(
-                                                  color: Colors.grey.shade300,
-                                                ),
-                                                borderRadius:
-                                                    BorderRadius.circular(8),
-                                              ),
-                                              child: Row(
-                                                children: [
-                                                  Expanded(
-                                                    child: InkWell(
-                                                      onTap: () {
-                                                        cartNotifier.updateQty(
-                                                          item.product.id,
-                                                          item.qty - 1,
-                                                        );
-                                                      },
-                                                      child: const Icon(
-                                                        Icons.remove,
-                                                        size: 18,
-                                                      ),
-                                                    ),
-                                                  ),
-
-                                                  Container(
-                                                    width: 1,
-                                                    color: Colors.grey.shade300,
-                                                  ),
-
-                                                  Expanded(
-                                                    child: Center(
-                                                      child: Text(
-                                                        item.qty.toString(),
-                                                        style: const TextStyle(
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ),
-
-                                                  Container(
-                                                    width: 1,
-                                                    color: Colors.grey.shade300,
-                                                  ),
-
-                                                  Expanded(
-                                                    child: InkWell(
-                                                      onTap: () {
-                                                        cartNotifier.updateQty(
-                                                          item.product.id,
-                                                          item.qty + 1,
-                                                        );
-                                                      },
-                                                      child: const Icon(
-                                                        Icons.add,
-                                                        size: 18,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          ),
-
-                                          const SizedBox(width: 8),
-
-                                          SizedBox(
-                                            height: 42,
-                                            width: 42,
-                                            child: ElevatedButton(
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor:
-                                                    AppColors.primary,
-                                                padding: EdgeInsets.zero,
-                                              ),
-                                              onPressed: () {
-                                                cartNotifier.remove(
-                                                  item.product.id,
-                                                );
-                                              },
-                                              child: Icon(
-                                                Icons.delete,
-                                                color: AppColors.dark,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-
-                                      if (item.stockError)
-                                        Container(
-                                          margin: const EdgeInsets.only(
-                                            top: 12,
-                                          ),
-                                          padding: const EdgeInsets.all(8),
-                                          decoration: BoxDecoration(
-                                            color: AppColors.primary,
-                                            borderRadius: BorderRadius.circular(
-                                              6,
-                                            ),
-                                          ),
-                                          child: Text(
-                                            "Jumlah melebihi stok tersedia (${item.product.stock})",
-                                            style: const TextStyle(
-                                              fontSize: 11,
-                                              color: AppColors.dark,
-                                            ),
-                                          ),
-                                        ),
-
-                                      const SizedBox(height: 12),
-
-                                      Text(
-                                        "Subtotal : ${formatRupiah(item.subtotal)}",
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
+                ? _buildEmptyCart()
+                : _buildCartList(cart),
           ),
         ],
       ),
-
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppColors.light,
-          border: Border(top: BorderSide(color: Colors.grey.shade300)),
-        ),
-        child: SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                children: [
-                  const Text("Subtotal"),
-                  const Spacer(),
-                  Text(" ${formatRupiah(cart.subtotal)}"),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  const Text(
-                    "TOTAL",
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const Spacer(),
-                  Text(
-                    " ${formatRupiah(checkoutNotifier.total)}",
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                height: 46,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: AppColors.dark,
-                    disabledBackgroundColor: AppColors.muted, // Saat disabled
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  onPressed: cart.items.isEmpty || cart.hasStockError
-                      ? null
-                      : () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const CheckoutScreen(),
-                            ),
-                          );
-                        },
-                  child: Text(
-                    cart.isBackorder ? "Proses Backorder" : "Proses Checkout",
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
+      bottomNavigationBar: CashierBottomTotal(
+        cart: cart,
+        formatRupiah: formatRupiah,
+        onCheckout: () {
+          Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (_) => const CheckoutScreen()));
+        },
       ),
     );
   }
-}
 
-class TriangleClipper extends CustomClipper<Path> {
-  @override
-  Path getClip(Size size) {
-    final path = Path();
-
-    path.lineTo(size.width, 0);
-    path.lineTo(size.width, size.height);
-    path.close();
-
-    return path;
+  Widget _buildBackorderBanner() {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(12, 10, 12, 0),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.orange.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.orange.withValues(alpha: 0.30)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(
+            Icons.info_outline_rounded,
+            color: Colors.orange,
+            size: 20,
+          ),
+          const SizedBox(width: 8),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Mode Backorder',
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                ),
+                SizedBox(height: 2),
+                Text(
+                  'Produk dapat diproses walaupun stok tidak mencukupi.',
+                  style: TextStyle(fontSize: 11, color: Colors.grey),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
-  @override
-  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
+  Widget _buildEmptyCart() {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.shopping_cart_outlined,
+            size: 58,
+            color: Colors.grey.shade400,
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            'Keranjang masih kosong',
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Tambahkan produk untuk mulai transaksi',
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCartList(CartState cart) {
+    return ListView.separated(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 20),
+      itemCount: cart.items.length,
+      separatorBuilder: (_, _) {
+        return const SizedBox(height: 10);
+      },
+      itemBuilder: (context, index) {
+        final item = cart.items[index];
+
+        return CashierCartItem(
+          item: item,
+          index: index,
+          isBackorder: cart.isBackorder,
+
+          qtyController: _qtyController(item),
+          packageSizeController: _packageSizeController(item),
+
+          packageQtyController: _packageQtyController(item),
+          packagePriceController: _packagePriceController(item),
+          retailPriceController: _retailPriceController(item),
+
+          qtyFocusNode: _qtyFocusNode(item.product.id),
+          packageSizeFocusNode: _packageSizeFocusNode(item.product.id),
+
+          packageQtyFocusNode: _packageQtyFocusNode(item.product.id),
+          packagePriceFocusNode: _packagePriceFocusNode(item.product.id),
+          retailPriceFocusNode: _retailPriceFocusNode(item.product.id),
+
+          formatRupiah: formatRupiah,
+          onUpdateQty: (value) {
+            _updateQty(item, value);
+          },
+          onIncreaseQty: () {
+            _increaseQty(item);
+          },
+          onDecreaseQty: () {
+            _decreaseQty(item);
+          },
+          onUpdatePackageQty: (value) {
+            _updatePackageQty(item, value);
+          },
+          onUpdatePackageSize: (value) {
+            _updatePackageSize(item, value);
+          },
+          onUpdatePackagePrice: (value) {
+            _updatePackagePrice(item, value);
+          },
+          onUpdateRetailPrice: (value) {
+            _updateRetailPrice(item, value);
+          },
+          onTogglePackagePricing: (enabled) {
+            _togglePackagePricing(item, enabled);
+          },
+
+          onRemove: () {
+            _removeItem(item);
+          },
+          onResetPackagePricing: () {
+            ref
+                .read(cartProvider.notifier)
+                .resetPackagePricing(item.product.id);
+          },
+        );
+      },
+    );
+  }
 }
 // import 'package:bk_pos/features/cashier/presentation/checkout_screen.dart';
+// import 'package:bk_pos/features/cashier/presentation/widgets/cashier_bottom_total.dart';
+// import 'package:bk_pos/features/cashier/presentation/widgets/cashier_cart_item.dart';
 // import 'package:bk_pos/features/cashier/provider/cart_provider.dart';
-// import 'package:bk_pos/features/cashier/provider/checkout_provider.dart';
 // import 'package:bk_pos/model/cart_item_model.dart';
 // import 'package:bk_pos/utils/app_colors.dart';
 // import 'package:bk_pos/utils/format_rupiah.dart';
@@ -598,391 +491,432 @@ class TriangleClipper extends CustomClipper<Path> {
 // }
 
 // class _CashierScreenState extends ConsumerState<CashierScreen> {
-//   final Map<int, TextEditingController> priceControllers = {};
+//   final Map<int, TextEditingController> _qtyControllers = {};
+//   final Map<int, TextEditingController> _packageQtyControllers = {};
+//   final Map<int, TextEditingController> _packagePriceControllers = {};
+//   final Map<int, TextEditingController> _retailPriceControllers = {};
 
-//   TextEditingController controllerFor(CartItemModel item) {
-//     return priceControllers.putIfAbsent(
-//       item.product.id,
-//       () => TextEditingController(text: item.sellingPrice.toInt().toString()),
-//     );
-//   }
+//   final Map<int, FocusNode> _qtyFocusNodes = {};
+//   final Map<int, FocusNode> _packageQtyFocusNodes = {};
+//   final Map<int, FocusNode> _packagePriceFocusNodes = {};
+//   final Map<int, FocusNode> _retailPriceFocusNodes = {};
 
 //   @override
 //   void dispose() {
-//     for (final c in priceControllers.values) {
-//       c.dispose();
+//     for (final controller in _qtyControllers.values) {
+//       controller.dispose();
 //     }
+
+//     for (final controller in _packageQtyControllers.values) {
+//       controller.dispose();
+//     }
+
+//     for (final controller in _packagePriceControllers.values) {
+//       controller.dispose();
+//     }
+
+//     for (final controller in _retailPriceControllers.values) {
+//       controller.dispose();
+//     }
+
+//     for (final node in _qtyFocusNodes.values) {
+//       node.dispose();
+//     }
+
+//     for (final node in _packageQtyFocusNodes.values) {
+//       node.dispose();
+//     }
+
+//     for (final node in _packagePriceFocusNodes.values) {
+//       node.dispose();
+//     }
+
+//     for (final node in _retailPriceFocusNodes.values) {
+//       node.dispose();
+//     }
+
 //     super.dispose();
+//   }
+
+//   TextEditingController _qtyController(CartItemModel item) {
+//     final controller = _qtyControllers.putIfAbsent(
+//       item.product.id,
+//       () => TextEditingController(text: item.qty.toString()),
+//     );
+
+//     _syncController(
+//       controller,
+//       item.qty.toString(),
+//       _qtyFocusNode(item.product.id),
+//     );
+
+//     return controller;
+//   }
+
+//   TextEditingController _packageQtyController(CartItemModel item) {
+//     final controller = _packageQtyControllers.putIfAbsent(
+//       item.product.id,
+//       () => TextEditingController(
+//         text: item.packageSizeValue > 0 ? item.packageSizeValue.toString() : '',
+//       ),
+//     );
+
+//     final value = item.packageSizeValue > 0
+//         ? item.packageSizeValue.toString()
+//         : '';
+
+//     _syncController(controller, value, _packageQtyFocusNode(item.product.id));
+
+//     return controller;
+//   }
+
+//   TextEditingController _packagePriceController(CartItemModel item) {
+//     final controller = _packagePriceControllers.putIfAbsent(
+//       item.product.id,
+//       () => TextEditingController(
+//         text: formatRupiahInput(item.currentPackagePrice),
+//       ),
+//     );
+
+//     final value = formatRupiahInput(item.currentPackagePrice);
+
+//     _syncController(controller, value, _packagePriceFocusNode(item.product.id));
+
+//     return controller;
+//   }
+
+//   TextEditingController _retailPriceController(CartItemModel item) {
+//     final controller = _retailPriceControllers.putIfAbsent(
+//       item.product.id,
+//       () => TextEditingController(
+//         text: formatRupiahInput(item.currentRetailPrice),
+//       ),
+//     );
+
+//     final value = formatRupiahInput(item.currentRetailPrice);
+
+//     _syncController(controller, value, _retailPriceFocusNode(item.product.id));
+
+//     return controller;
+//   }
+
+//   FocusNode _qtyFocusNode(int productId) {
+//     return _qtyFocusNodes.putIfAbsent(productId, FocusNode.new);
+//   }
+
+//   FocusNode _packageQtyFocusNode(int productId) {
+//     return _packageQtyFocusNodes.putIfAbsent(productId, FocusNode.new);
+//   }
+
+//   FocusNode _packagePriceFocusNode(int productId) {
+//     return _packagePriceFocusNodes.putIfAbsent(productId, FocusNode.new);
+//   }
+
+//   FocusNode _retailPriceFocusNode(int productId) {
+//     return _retailPriceFocusNodes.putIfAbsent(productId, FocusNode.new);
+//   }
+
+//   void _syncController(
+//     TextEditingController controller,
+//     String value,
+//     FocusNode focusNode,
+//   ) {
+//     if (focusNode.hasFocus) {
+//       return;
+//     }
+
+//     if (controller.text == value) {
+//       return;
+//     }
+
+//     controller.value = TextEditingValue(
+//       text: value,
+//       selection: TextSelection.collapsed(offset: value.length),
+//     );
+//   }
+
+//   void _updateQty(CartItemModel item, String value) {
+//     final qty = int.tryParse(value);
+
+//     if (qty == null || qty < 1) {
+//       return;
+//     }
+
+//     final notifier = ref.read(cartProvider.notifier);
+
+//     notifier.updateQty(item.product.id, qty);
+
+//     if (item.packageQty > qty) {
+//       notifier.setPackageQty(item.product.id, qty);
+
+//       final controller = _packageQtyControllers[item.product.id];
+
+//       if (controller != null) {
+//         final text = qty.toString();
+
+//         controller.value = TextEditingValue(
+//           text: text,
+//           selection: TextSelection.collapsed(offset: text.length),
+//         );
+//       }
+//     }
+//   }
+
+//   void _increaseQty(CartItemModel item) {
+//     ref.read(cartProvider.notifier).updateQty(item.product.id, item.qty + 1);
+//   }
+
+//   void _decreaseQty(CartItemModel item) {
+//     if (item.qty <= 1) {
+//       return;
+//     }
+
+//     final newQty = item.qty - 1;
+//     final notifier = ref.read(cartProvider.notifier);
+
+//     notifier.updateQty(item.product.id, newQty);
+
+//     if (item.packageQty > newQty) {
+//       notifier.setPackageQty(item.product.id, newQty);
+
+//       final controller = _packageQtyControllers[item.product.id];
+
+//       if (controller != null) {
+//         final text = newQty.toString();
+
+//         controller.value = TextEditingValue(
+//           text: text,
+//           selection: TextSelection.collapsed(offset: text.length),
+//         );
+//       }
+//     }
+//   }
+
+//   void _updatePackageQty(CartItemModel item, String value) {
+//     int packageQty = int.tryParse(value) ?? 0;
+
+//     if (packageQty > item.qty) {
+//       packageQty = item.qty;
+//     }
+
+//     if (packageQty < 0) {
+//       packageQty = 0;
+//     }
+
+//     ref.read(cartProvider.notifier).setPackageQty(item.product.id, packageQty);
+
+//     final controller = _packageQtyControllers[item.product.id];
+
+//     if (controller != null) {
+//       final text = packageQty > 0 ? packageQty.toString() : '';
+
+//       if (controller.text != text) {
+//         controller.value = TextEditingValue(
+//           text: text,
+//           selection: TextSelection.collapsed(offset: text.length),
+//         );
+//       }
+//     }
+//   }
+
+//   void _updatePackagePrice(CartItemModel item, String value) {
+//     final price = parseRupiah(value);
+
+//     ref.read(cartProvider.notifier).setPackagePrice(item.product.id, price);
+//   }
+
+//   void _updateRetailPrice(CartItemModel item, String value) {
+//     final price = parseRupiah(value);
+
+//     ref.read(cartProvider.notifier).setRetailPrice(item.product.id, price);
+//   }
+
+//   void _togglePackagePricing(CartItemModel item, bool enabled) {
+//     final notifier = ref.read(cartProvider.notifier);
+
+//     if (enabled) {
+//       notifier.setUsePackagePricing(item.product.id, true);
+
+//       if (item.packageSizeValue <= 0) {
+//         notifier.setPackageQty(item.product.id, 1);
+
+//         final controller = _packageQtyControllers[item.product.id];
+
+//         if (controller != null) {
+//           controller.text = '1';
+//         }
+//       }
+//     } else {
+//       notifier.resetPackagePricing(item.product.id);
+//     }
+//   }
+
+//   void _removeItem(CartItemModel item) {
+//     ref.read(cartProvider.notifier).remove(item.product.id);
 //   }
 
 //   @override
 //   Widget build(BuildContext context) {
 //     final cart = ref.watch(cartProvider);
-//     final cartNotifier = ref.read(cartProvider.notifier);
-//     final checkoutNotifier = ref.read(checkoutProvider.notifier);
 
 //     return Scaffold(
+//       backgroundColor: Colors.grey.shade100,
 //       appBar: AppBar(
 //         elevation: 0,
 //         centerTitle: true,
 //         backgroundColor: Colors.white,
-//         foregroundColor: Colors.black,
+//         foregroundColor: AppColors.dark,
 //         title: const Text(
-//           "Keranjang Kasir",
+//           'Keranjang Kasir',
 //           style: TextStyle(fontWeight: FontWeight.bold),
 //         ),
 //       ),
 //       body: Column(
 //         children: [
-//           Container(height: 1, color: Colors.grey.shade300),
+//           if (cart.isBackorder) _buildBackorderBanner(),
 
 //           Expanded(
 //             child: cart.items.isEmpty
-//                 ? const Center(child: Text('Belum ada produk'))
-//                 : ListView.builder(
-//                     itemCount: cart.items.length,
-//                     itemBuilder: (context, index) {
-//                       final item = cart.items[index];
-
-//                       final controller = controllerFor(item);
-//                       final value = item.sellingPrice.toInt().toString();
-//                       if (controller.text != value) {
-//                         controller.text = value;
-//                       }
-//                       return Stack(
-//                         children: [
-//                           Container(
-//                             margin: const EdgeInsets.symmetric(
-//                               horizontal: 12,
-//                               vertical: 6,
-//                             ),
-//                             clipBehavior: Clip.hardEdge,
-//                             decoration: BoxDecoration(
-//                               color: Colors.white,
-//                               borderRadius: BorderRadius.circular(10),
-//                               border: Border.all(
-//                                 color: item.stockError
-//                                     ? Colors.red
-//                                     : Colors.grey.shade300,
-//                               ),
-//                             ),
-//                             child: Stack(
-//                               children: [
-//                                 /// nomor pojok kanan
-//                                 Positioned(
-//                                   right: 0,
-//                                   top: 0,
-//                                   child: ClipPath(
-//                                     clipper: TriangleClipper(),
-//                                     child: Container(
-//                                       width: 42,
-//                                       height: 42,
-//                                       color: Colors.black,
-//                                       child: Center(
-//                                         child: Transform.translate(
-//                                           offset: const Offset(
-//                                             8,
-//                                             -5,
-//                                           ), // sesuaikan jika perlu
-//                                           child: Text(
-//                                             "${index + 1}",
-//                                             style: const TextStyle(
-//                                               color: Colors.white,
-//                                               fontWeight: FontWeight.bold,
-//                                               fontSize: 11,
-//                                             ),
-//                                           ),
-//                                         ),
-//                                       ),
-//                                     ),
-//                                   ),
-//                                 ),
-
-//                                 Padding(
-//                                   padding: const EdgeInsets.all(14),
-//                                   child: Column(
-//                                     crossAxisAlignment:
-//                                         CrossAxisAlignment.start,
-//                                     children: [
-//                                       Text(
-//                                         item.product.name,
-//                                         style: const TextStyle(
-//                                           fontSize: 16,
-//                                           fontWeight: FontWeight.w600,
-//                                         ),
-//                                       ),
-
-//                                       const SizedBox(height: 4),
-
-//                                       if (item.product.discount > 0) ...[
-//                                         Text(
-//                                           "Rp ${item.product.price.toInt()}",
-//                                           style: const TextStyle(
-//                                             fontSize: 11,
-//                                             color: Colors.grey,
-//                                             decoration:
-//                                                 TextDecoration.lineThrough,
-//                                           ),
-//                                         ),
-
-//                                         Text(
-//                                           "Harga Diskon : ${formatRupiah(item.product.finalPrice)}",
-                                          
-//                                           style: const TextStyle(
-//                                             fontSize: 11,
-//                                             color: Colors.green,
-//                                             fontWeight: FontWeight.bold,
-//                                           ),
-//                                         ),
-//                                       ] else
-//                                         Text(
-//                                           "Harga : ${formatRupiah(item.product.price)}",
-//                                           style: const TextStyle(
-//                                             fontSize: 11,
-//                                             color: Colors.grey,
-//                                           ),
-//                                         ),
-
-//                                       const SizedBox(height: 18),
-
-//                                       Row(
-//                                         mainAxisAlignment:
-//                                             MainAxisAlignment.spaceBetween,
-//                                         children: [
-//                                           const Text("Quantity"),
-//                                           Text(
-//                                             "(Stok : ${item.product.stock})",
-//                                             style: const TextStyle(
-//                                               fontSize: 11,
-//                                               color: Colors.grey,
-//                                             ),
-//                                           ),
-//                                         ],
-//                                       ),
-
-//                                       const SizedBox(height: 8),
-
-//                                       Row(
-//                                         children: [
-//                                           Expanded(
-//                                             child: Container(
-//                                               height: 42,
-//                                               decoration: BoxDecoration(
-//                                                 border: Border.all(
-//                                                   color: Colors.grey.shade300,
-//                                                 ),
-//                                                 borderRadius:
-//                                                     BorderRadius.circular(8),
-//                                               ),
-//                                               child: Row(
-//                                                 children: [
-//                                                   Expanded(
-//                                                     child: InkWell(
-//                                                       onTap: () {
-//                                                         cartNotifier.updateQty(
-//                                                           item.product.id,
-//                                                           item.qty - 1,
-//                                                         );
-//                                                       },
-//                                                       child: const Icon(
-//                                                         Icons.remove,
-//                                                         size: 18,
-//                                                       ),
-//                                                     ),
-//                                                   ),
-
-//                                                   Container(
-//                                                     width: 1,
-//                                                     color: Colors.grey.shade300,
-//                                                   ),
-
-//                                                   Expanded(
-//                                                     child: Center(
-//                                                       child: Text(
-//                                                         item.qty.toString(),
-//                                                         style: const TextStyle(
-//                                                           fontWeight:
-//                                                               FontWeight.bold,
-//                                                         ),
-//                                                       ),
-//                                                     ),
-//                                                   ),
-
-//                                                   Container(
-//                                                     width: 1,
-//                                                     color: Colors.grey.shade300,
-//                                                   ),
-
-//                                                   Expanded(
-//                                                     child: InkWell(
-//                                                       onTap: () {
-//                                                         cartNotifier.updateQty(
-//                                                           item.product.id,
-//                                                           item.qty + 1,
-//                                                         );
-//                                                       },
-//                                                       child: const Icon(
-//                                                         Icons.add,
-//                                                         size: 18,
-//                                                       ),
-//                                                     ),
-//                                                   ),
-//                                                 ],
-//                                               ),
-//                                             ),
-//                                           ),
-
-//                                           const SizedBox(width: 8),
-
-//                                           SizedBox(
-//                                             height: 42,
-//                                             width: 42,
-//                                             child: ElevatedButton(
-//                                               style: ElevatedButton.styleFrom(
-//                                                 backgroundColor:
-//                                                     AppColors.primary,
-//                                                 padding: EdgeInsets.zero,
-//                                               ),
-//                                               onPressed: () {
-//                                                 cartNotifier.remove(
-//                                                   item.product.id,
-//                                                 );
-//                                               },
-//                                               child: Icon(
-//                                                 Icons.delete,
-//                                                 color: AppColors.dark,
-//                                               ),
-//                                             ),
-//                                           ),
-//                                         ],
-//                                       ),
-
-//                                       if (item.stockError)
-//                                         Container(
-//                                           margin: const EdgeInsets.only(
-//                                             top: 12,
-//                                           ),
-//                                           padding: const EdgeInsets.all(8),
-//                                           decoration: BoxDecoration(
-//                                             color: AppColors.primary,
-//                                             borderRadius: BorderRadius.circular(
-//                                               6,
-//                                             ),
-//                                           ),
-//                                           child: Text(
-//                                             "Jumlah melebihi stok tersedia (${item.product.stock})",
-//                                             style: const TextStyle(
-//                                               fontSize: 11,
-//                                               color: AppColors.dark,
-//                                             ),
-//                                           ),
-//                                         ),
-
-//                                       const SizedBox(height: 12),
-
-//                                       Text(
-//                                         "Subtotal : ${formatRupiah(item.subtotal)}",
-//                                         style: const TextStyle(
-//                                           fontWeight: FontWeight.bold,
-//                                           fontSize: 14,
-//                                         ),
-//                                       ),
-//                                     ],
-//                                   ),
-//                                 ),
-//                               ],
-//                             ),
-//                           ),
-//                         ],
-//                       );
-//                     },
-//                   ),
+//                 ? _buildEmptyCart()
+//                 : _buildCartList(cart),
 //           ),
 //         ],
 //       ),
-
-//       bottomNavigationBar: Container(
-//         padding: const EdgeInsets.all(16),
-//         decoration: BoxDecoration(
-//           color: AppColors.light,
-//           border: Border(top: BorderSide(color: Colors.grey.shade300)),
-//         ),
-//         child: SafeArea(
-//           child: Column(
-//             mainAxisSize: MainAxisSize.min,
-//             children: [
-//               Row(
-//                 children: [
-//                   const Text("Subtotal"),
-//                   const Spacer(),
-//                   Text(" ${formatRupiah(cart.subtotal)}"),
-//                 ],
-//               ),
-//               const SizedBox(height: 8),
-//               Row(
-//                 children: [
-//                   const Text(
-//                     "TOTAL",
-//                     style: TextStyle(fontWeight: FontWeight.bold),
-//                   ),
-//                   const Spacer(),
-//                   Text(
-//                     " ${formatRupiah(checkoutNotifier.total)}",
-//                     style: const TextStyle(
-//                       fontWeight: FontWeight.bold,
-//                       fontSize: 18,
-//                     ),
-//                   ),
-//                 ],
-//               ),
-//               const SizedBox(height: 16),
-//               SizedBox(
-//                 width: double.infinity,
-//                 height: 46,
-//                 child: ElevatedButton(
-//                   style: ElevatedButton.styleFrom(
-//                     backgroundColor: AppColors.primary, 
-//                     foregroundColor: AppColors.dark, 
-//                     disabledBackgroundColor:
-//                         AppColors.muted, // Saat disabled
-//                     elevation: 0,
-//                     shape: RoundedRectangleBorder(
-//                       borderRadius: BorderRadius.circular(8),
-//                     ),
-//                   ),
-//                   onPressed: cart.items.isEmpty || cart.hasStockError
-//                       ? null
-//                       : () {
-//                           Navigator.push(
-//                             context,
-//                             MaterialPageRoute(
-//                               builder: (_) => const CheckoutScreen(),
-//                             ),
-//                           );
-//                         },
-//                   child: const Text("Proses Checkout"),
-//                 ),
-//               ),
-//             ],
-//           ),
-//         ),
+//       bottomNavigationBar: CashierBottomTotal(
+//         cart: cart,
+//         formatRupiah: formatRupiah,
+//         onCheckout: () {
+//           Navigator.of(
+//             context,
+//           ).push(MaterialPageRoute(builder: (_) => const CheckoutScreen()));
+//         },
 //       ),
 //     );
 //   }
-// }
 
-// class TriangleClipper extends CustomClipper<Path> {
-//   @override
-//   Path getClip(Size size) {
-//     final path = Path();
-
-//     path.lineTo(size.width, 0);
-//     path.lineTo(size.width, size.height);
-//     path.close();
-
-//     return path;
+//   Widget _buildBackorderBanner() {
+//     return Container(
+//       width: double.infinity,
+//       margin: const EdgeInsets.fromLTRB(12, 10, 12, 0),
+//       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+//       decoration: BoxDecoration(
+//         color: Colors.orange.withValues(alpha: 0.10),
+//         borderRadius: BorderRadius.circular(10),
+//         border: Border.all(color: Colors.orange.withValues(alpha: 0.30)),
+//       ),
+//       child: Row(
+//         crossAxisAlignment: CrossAxisAlignment.start,
+//         children: [
+//           const Icon(
+//             Icons.info_outline_rounded,
+//             color: Colors.orange,
+//             size: 20,
+//           ),
+//           const SizedBox(width: 8),
+//           const Expanded(
+//             child: Column(
+//               crossAxisAlignment: CrossAxisAlignment.start,
+//               children: [
+//                 Text(
+//                   'Mode Backorder',
+//                   style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+//                 ),
+//                 SizedBox(height: 2),
+//                 Text(
+//                   'Produk dapat diproses walaupun stok tidak mencukupi.',
+//                   style: TextStyle(fontSize: 11, color: Colors.grey),
+//                 ),
+//               ],
+//             ),
+//           ),
+//         ],
+//       ),
+//     );
 //   }
 
-//   @override
-//   bool shouldReclip(CustomClipper<Path> oldClipper) => false;
+//   Widget _buildEmptyCart() {
+//     return Center(
+//       child: Column(
+//         mainAxisSize: MainAxisSize.min,
+//         children: [
+//           Icon(
+//             Icons.shopping_cart_outlined,
+//             size: 58,
+//             color: Colors.grey.shade400,
+//           ),
+//           const SizedBox(height: 12),
+//           const Text(
+//             'Keranjang masih kosong',
+//             style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+//           ),
+//           const SizedBox(height: 4),
+//           Text(
+//             'Tambahkan produk untuk mulai transaksi',
+//             style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+
+//   Widget _buildCartList(CartState cart) {
+//     return ListView.separated(
+//       padding: const EdgeInsets.fromLTRB(12, 12, 12, 20),
+//       itemCount: cart.items.length,
+//       separatorBuilder: (_, _) {
+//         return const SizedBox(height: 10);
+//       },
+//       itemBuilder: (context, index) {
+//         final item = cart.items[index];
+
+//         return CashierCartItem(
+//           item: item,
+//           index: index,
+//           isBackorder: cart.isBackorder,
+
+//           qtyController: _qtyController(item),
+//           packageQtyController: _packageQtyController(item),
+//           packagePriceController: _packagePriceController(item),
+//           retailPriceController: _retailPriceController(item),
+
+//           qtyFocusNode: _qtyFocusNode(item.product.id),
+//           packageQtyFocusNode: _packageQtyFocusNode(item.product.id),
+//           packagePriceFocusNode: _packagePriceFocusNode(item.product.id),
+//           retailPriceFocusNode: _retailPriceFocusNode(item.product.id),
+
+//           formatRupiah: formatRupiah,
+//           onUpdateQty: (value) {
+//             _updateQty(item, value);
+//           },
+//           onIncreaseQty: () {
+//             _increaseQty(item);
+//           },
+//           onDecreaseQty: () {
+//             _decreaseQty(item);
+//           },
+//           onUpdatePackageQty: (value) {
+//             _updatePackageQty(item, value);
+//           },
+//           onUpdatePackagePrice: (value) {
+//             _updatePackagePrice(item, value);
+//           },
+//           onUpdateRetailPrice: (value) {
+//             _updateRetailPrice(item, value);
+//           },
+//           onTogglePackagePricing: (enabled) {
+//             _togglePackagePricing(item, enabled);
+//           },
+
+//           onRemove: () {
+//             _removeItem(item);
+//           },
+//           onResetPackagePricing: () {
+//             ref
+//                 .read(cartProvider.notifier)
+//                 .resetPackagePricing(item.product.id);
+//           },
+//         );
+//       },
+//     );
+//   }
 // }

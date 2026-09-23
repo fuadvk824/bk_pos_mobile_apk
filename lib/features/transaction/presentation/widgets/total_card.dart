@@ -26,7 +26,6 @@ class TotalCard extends StatelessWidget {
         padding: const EdgeInsets.all(12),
         child: Column(
           children: [
-            /// Header
             Row(
               children: const [
                 Icon(
@@ -49,17 +48,23 @@ class TotalCard extends StatelessWidget {
             const SizedBox(height: 10),
 
             _row("Subtotal", currency.format(trx.subtotal)),
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
 
             _row("Ongkir", currency.format(trx.shippingCost)),
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
 
             _row(
               "Potongan Point",
               "- ${currency.format(trx.pointsUsed)}",
               valueColor: Colors.orange.shade700,
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
+            _row(
+              "Diskon/Nego",
+              "- ${currency.format(trx.nego)}",
+              valueColor: Colors.orange.shade700,
+            ),
+            const SizedBox(height: 8),
 
             _row(
               "Sisa",
@@ -68,7 +73,7 @@ class TotalCard extends StatelessWidget {
             ),
 
             const Padding(
-              padding: EdgeInsets.symmetric(vertical: 14),
+              padding: EdgeInsets.symmetric(vertical: 10),
               child: Divider(height: 1),
             ),
 

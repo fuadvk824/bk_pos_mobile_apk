@@ -1,5 +1,6 @@
 import 'package:bk_pos/model/transaction_detail_model.dart';
 import 'package:bk_pos/utils/app_colors.dart';
+import 'package:bk_pos/utils/string_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -28,7 +29,7 @@ class TransactionHeaderCard extends StatelessWidget {
         const SizedBox(width: 6),
         Text(
           "$title :",
-          style: const TextStyle(color: AppColors.light, fontSize: 12),
+          style: const TextStyle(color: AppColors.light, fontSize: 13),
         ),
         const SizedBox(width: 4),
         Expanded(
@@ -65,7 +66,6 @@ class TransactionHeaderCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            /// Header
             Row(
               children: [
                 Container(
@@ -132,7 +132,7 @@ class TransactionHeaderCard extends StatelessWidget {
             infoItem(
               LucideIcons.packageCheck,
               "Delivery",
-              trx.deliveryType ?? "-",
+              StringHelper.titleCase(trx.deliveryType),
             ),
 
             const SizedBox(height: 12),

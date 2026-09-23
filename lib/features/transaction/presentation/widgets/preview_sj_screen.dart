@@ -85,9 +85,7 @@ class _PreviewSjScreenState extends State<PreviewSjScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      //--------------------------------------
-                      // HEADER
-                      //--------------------------------------
+                      
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -105,7 +103,6 @@ class _PreviewSjScreenState extends State<PreviewSjScreen> {
 
                           const SizedBox(width: 8),
 
-                          // Nama toko
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -145,14 +142,13 @@ class _PreviewSjScreenState extends State<PreviewSjScreen> {
 
                           const SizedBox(width: 6),
 
-                          // Box Pengiriman (diperkecil)
                           SizedBox(
                             width: 95,
                             child: Container(
                               decoration: BoxDecoration(
                                 border: Border.all(
                                   color: Colors.black,
-                                  width: 0.5, // tipiskan border
+                                  width: 0.5, 
                                 ),
                               ),
                               child: Column(
@@ -191,13 +187,9 @@ class _PreviewSjScreenState extends State<PreviewSjScreen> {
 
                       const SizedBox(height: 15),
 
-                      //--------------------------------------
-                      // CUSTOMER
-                      //--------------------------------------
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // CUSTOMER
                           SizedBox(
                             width: MediaQuery.of(context).size.width * 0.40,
                             child: Container(
@@ -250,7 +242,6 @@ class _PreviewSjScreenState extends State<PreviewSjScreen> {
 
                           const Spacer(),
 
-                          // OPERATOR
                           SizedBox(
                             width: 95,
                             child: Align(
@@ -305,9 +296,6 @@ class _PreviewSjScreenState extends State<PreviewSjScreen> {
 
                       const SizedBox(height: 15),
 
-                      //--------------------------------------
-                      // TABLE
-                      //--------------------------------------
                       Column(
                         children: [
                           Table(
@@ -395,9 +383,6 @@ class _PreviewSjScreenState extends State<PreviewSjScreen> {
 
                       const SizedBox(height: 15),
 
-                      //--------------------------------------
-                      // KETERANGAN
-                      //--------------------------------------
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(4),
@@ -418,7 +403,6 @@ class _PreviewSjScreenState extends State<PreviewSjScreen> {
                             const SizedBox(height: 4),
 
                             Text(
-                              // trx.customerName ?? "-",
                               "${trx.customerName ?? "-"} (${trx.customerPhone ?? "-"})",
                               style: TextStyle(fontSize: 6),
                             ),

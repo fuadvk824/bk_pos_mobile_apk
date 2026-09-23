@@ -11,25 +11,20 @@ class AuthRepository {
         '/login',
         data: {'login': login, 'password': password},
       );
-      // print('LOGIN RESPONSE: ${res.data}');
+      
       final data = res.data;
-
       if (data is! Map) {
         throw Exception('Response server tidak valid');
       }
 
       final token = data['token'];
-
       if (token == null || token.toString().isEmpty) {
         throw Exception('Token login tidak ditemukan');
       }
 
-      // Simpan token terlebih dahulu
       await TokenManager.set(token.toString());
 
-      // Ambil data user lengkap dari endpoint /users
       final user = await me();
-
       if (user == null) {
         throw Exception('Data user tidak ditemukan dari server');
       }

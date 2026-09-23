@@ -54,7 +54,7 @@ class CustomerCard extends StatelessWidget {
                 ),
                 SizedBox(width: 8),
                 Text(
-                  "${trx.customerName ?? "-"} (customer)",
+                  "${trx.customerName ?? "-"} (Customer)",
                   
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                 ),

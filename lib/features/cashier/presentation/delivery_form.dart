@@ -17,13 +17,6 @@ class _DeliveryFormState extends ConsumerState<DeliveryForm> {
   late final TextEditingController shippingController;
   late final TextEditingController notesController;
 
-  // @override
-  // void initState() {
-  //   super.initState();
-  //   shippingController = TextEditingController();
-  //   notesController = TextEditingController();
-  // }
-
   @override
   void initState() {
     super.initState();
@@ -48,12 +41,6 @@ class _DeliveryFormState extends ConsumerState<DeliveryForm> {
   Widget build(BuildContext context) {
     final state = ref.watch(deliveryProvider);
     final notifier = ref.read(deliveryProvider.notifier);
-
-    // shippingController.text = state.delivery.shippingCost == 0
-    //     ? ""
-    //     : state.delivery.shippingCost.toInt().toString();
-
-    // notesController.text = state.delivery.notes;
 
     return Card(
       margin: EdgeInsets.zero,
@@ -89,8 +76,12 @@ class _DeliveryFormState extends ConsumerState<DeliveryForm> {
                 DropdownMenuItem(value: "pickup", child: Text("Pickup")),
                 DropdownMenuItem(value: "delivery", child: Text("Delivery")),
               ],
+              onTap: () {
+                FocusManager.instance.primaryFocus?.unfocus();
+              },
               onChanged: (value) {
                 if (value != null) {
+                  FocusScope.of(context).unfocus();
                   notifier.updateType(value);
                 }
               },
@@ -99,17 +90,6 @@ class _DeliveryFormState extends ConsumerState<DeliveryForm> {
             if (state.delivery.deliveryType == "delivery") ...[
               const SizedBox(height: 12),
 
-              // TextField(
-              //   controller: shippingController,
-              //   keyboardType: TextInputType.number,
-              //   decoration: inputDecoration(
-              //     label: "Biaya Ongkir",
-              //     icon: LucideIcons.badgeDollarSign,
-              //   ),
-              //   onChanged: (v) {
-              //     notifier.updateShipping(double.tryParse(v) ?? 0);
-              //   },
-              // ),
               TextField(
                 controller: shippingController,
                 keyboardType: TextInputType.number,
@@ -128,7 +108,6 @@ class _DeliveryFormState extends ConsumerState<DeliveryForm> {
 
                   notifier.updateShipping(amount);
 
-                  // Format ulang menjadi Rp 10.000
                   final formatted = amount == 0 ? "" : formatRupiah(amount);
 
                   if (shippingController.text != formatted) {

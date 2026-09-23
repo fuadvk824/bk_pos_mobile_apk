@@ -40,13 +40,6 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
   double get paidAmount =>
       widget.transaction.payments.fold(0, (sum, e) => sum + e.amount);
 
-  // double get shippingCost {
-  //   if (deliveryType == "delivery") {
-  //     return double.tryParse(shippingController.text) ?? 0;
-  //   }
-  //   return 0;
-  // }
-
   double get shippingCost {
     if (deliveryType == "delivery") {
       return parseRupiah(shippingController.text);
@@ -55,22 +48,16 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
   }
 
   double get currentTotal {
-    return widget.transaction.subtotal + shippingCost - widget.transaction.pointsUsed;
+    return widget.transaction.subtotal +
+        shippingCost -
+        widget.transaction.pointsUsed -
+        widget.transaction.nego;
   }
 
   double get remaining {
     return currentTotal - paidAmount;
   }
 
-  // void refreshAmountIfNeeded() {
-  //   if (amountEdited) return;
-
-  //   amountController.text = remaining.toInt().toString();
-  //   amountController.selection = TextSelection.fromPosition(
-  //     TextPosition(offset: amountController.text.length),
-  //   );
-  // }
-  
   void refreshAmountIfNeeded() {
     if (amountEdited) return;
 
@@ -85,35 +72,29 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
   double getCurrentRemaining() {
     return remaining;
   }
-
+ 
   @override
   void initState() {
     super.initState();
 
     driverController.text = widget.transaction.driverName ?? "";
     notesController.text = widget.transaction.notes ?? "";
-
     deliveryType = widget.transaction.deliveryType ?? "pickup";
-    // shippingController.text = widget.transaction.shippingCost
-    //     .toInt()
-    //     .toString();
+
     shippingController.text = widget.transaction.shippingCost == 0
         ? ''
         : formatRupiah(widget.transaction.shippingCost);
 
-    final paid = widget.transaction.payments.fold<double>(
-      0,
-      (sum, e) => sum + e.amount,
-    );
+    amountController.text = remaining > 0 ? formatRupiah(remaining) : '';
 
-    final remaining = widget.transaction.total - paid;
-    amountController.text = remaining.toInt().toString();
     amountEdited = false;
 
     shippingController.addListener(() {
       refreshAmountIfNeeded();
 
-      setState(() {});
+      if (mounted) {
+        setState(() {});
+      }
     });
   }
 
@@ -186,7 +167,6 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
       return;
     }
 
-    // final amount = double.tryParse(amountController.text) ?? 0;
     final amount = parseRupiah(amountController.text);
     if (amount <= 0) {
       AppToast.error(
@@ -207,9 +187,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
         amount: amount > getCurrentRemaining() ? getCurrentRemaining() : amount,
         driverName: showDriverField ? driverController.text.trim() : null,
         deliveryType: showDeliveryOption ? deliveryType : null,
-        // shippingCost: showShippingField
-        //     ? (double.tryParse(shippingController.text) ?? 0)
-        //     : null,
+        
         shippingCost: showShippingField
             ? parseRupiah(shippingController.text)
             : null,
@@ -250,7 +228,6 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Handle Bottom Sheet
               Center(
                 child: Container(
                   width: 42,
@@ -264,7 +241,6 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
 
               const SizedBox(height: 20),
 
-              // Header
               Row(
                 children: [
                   Container(
@@ -306,7 +282,6 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
 
               const SizedBox(height: 14),
 
-              // Summary
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(10),
@@ -321,17 +296,23 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
                   children: [
                     buildSummaryRow(
                       'Subtotal',
-                      'Rp ${widget.transaction.subtotal.toInt()}',
+                      formatRupiah(widget.transaction.subtotal),
                     ),
                     const SizedBox(height: 5),
 
-                    buildSummaryRow('Ongkir', 'Rp ${shippingCost.toInt()}'),
-
+                    buildSummaryRow('Ongkir', formatRupiah(shippingCost)),
                     const SizedBox(height: 5),
 
                     buildSummaryRow(
                       'Point',
-                      '- Rp ${widget.transaction.pointsUsed.toInt()}',
+                      '-${formatRupiah(widget.transaction.pointsUsed)}',
+                      color: AppColors.primary,
+                    ),
+                    const SizedBox(height: 5),
+
+                    buildSummaryRow(
+                      'Diskon/Nego',
+                      '-${formatRupiah(widget.transaction.nego)}',
                       color: AppColors.primary,
                     ),
 
@@ -342,16 +323,13 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
 
                     buildSummaryRow(
                       'Total',
-                      'Rp ${currentTotal.toInt()}',
+                      formatRupiah(currentTotal),
                       isBold: true,
                     ),
 
                     const SizedBox(height: 5),
 
-                    buildSummaryRow(
-                      'Sudah Dibayar',
-                      'Rp ${paidAmount.toInt()}',
-                    ),
+                    buildSummaryRow('Sudah Dibayar', formatRupiah(paidAmount)),
 
                     const SizedBox(height: 5),
 
@@ -367,7 +345,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
                       ),
                       child: buildSummaryRow(
                         'Sisa Pembayaran',
-                        'Rp ${remaining.toInt()}',
+                        formatRupiah(remaining),
                         color: AppColors.primary,
                         isBold: true,
                       ),
@@ -378,7 +356,6 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
 
               const SizedBox(height: 14),
 
-              // Delivery Type
               if (showDeliveryOption) ...[
                 DropdownButtonFormField<String>(
                   key: ValueKey(deliveryType),
@@ -410,19 +387,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
                 ),
 
                 const SizedBox(height: 8),
-
-                // if (showShippingField) ...[
-                //   TextField(
-                //     controller: shippingController,
-                //     keyboardType: TextInputType.number,
-                //     decoration: inputDecoration(
-                //       label: 'Ongkos Kirim',
-                //       icon: LucideIcons.receipt,
-                //     ),
-                //   ),
-
-                //   const SizedBox(height: 8),
-                // ],
+ 
                 if (showShippingField) ...[
                   TextField(
                     controller: shippingController,
@@ -460,7 +425,6 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
                 ],
               ],
 
-              // Driver
               if (showDriverField) ...[
                 TextField(
                   controller: driverController,
@@ -473,7 +437,6 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
                 const SizedBox(height: 8),
               ],
 
-              // Notes
               TextField(
                 controller: notesController,
                 maxLines: 4,
@@ -486,7 +449,6 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
 
               const SizedBox(height: 8),
 
-              // Payment Method & Amount
               if (!isPaid) ...[
                 DropdownButtonFormField<String>(
                   key: ValueKey(paymentMethod),
@@ -514,28 +476,6 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
 
                 const SizedBox(height: 8),
 
-                // TextField(
-                //   controller: amountController,
-                //   keyboardType: TextInputType.number,
-                //   decoration: inputDecoration(
-                //     label: 'Nominal Pembayaran',
-                //     icon: LucideIcons.banknote,
-                //   ),
-                //   onChanged: (value) {
-                //     amountEdited = true;
-
-                //     double amount = double.tryParse(value) ?? 0;
-                //     final maxAmount = getCurrentRemaining();
-
-                //     if (amount > maxAmount) {
-                //       amount = maxAmount;
-                //       amountController.text = amount.toInt().toString();
-                //       amountController.selection = TextSelection.fromPosition(
-                //         TextPosition(offset: amountController.text.length),
-                //       );
-                //     }
-                //   },
-                // ),
                 TextField(
                   controller: amountController,
                   keyboardType: TextInputType.number,
@@ -577,7 +517,6 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
 
               const SizedBox(height: 14),
 
-              // Submit Button
               SizedBox(
                 width: double.infinity,
                 height: 54,

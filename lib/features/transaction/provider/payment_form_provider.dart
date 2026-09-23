@@ -102,10 +102,6 @@ class PaymentFormNotifier extends StateNotifier<PaymentFormState> {
     state = state.copyWith(amount: remaining(trx));
   }
 
-  /// ===============================
-  /// Calculator
-  /// ===============================
-
   double paid(TransactionDetailModel trx) {
     return trx.payments.fold<double>(0, (sum, e) => sum + e.amount);
   }
@@ -123,14 +119,8 @@ class PaymentFormNotifier extends StateNotifier<PaymentFormState> {
     return total(trx) - paid(trx);
   }
 
-  /// ===============================
-  /// Validation
-  /// ===============================
-
   String? validate(TransactionDetailModel trx) {
-    //tambahan
     final isPaid = trx.paymentStatus.toLowerCase() == 'paid';
-
     if (isPaid) {
       if (state.deliveryType == 'delivery' && state.driver.trim().isEmpty) {
         return "Driver wajib diisi";
@@ -138,7 +128,6 @@ class PaymentFormNotifier extends StateNotifier<PaymentFormState> {
 
       return null;
     }
-    //tambahan
 
     if (state.amount <= 0) {
       return "Nominal tidak valid";
@@ -155,12 +144,7 @@ class PaymentFormNotifier extends StateNotifier<PaymentFormState> {
     return null;
   }
 
-  /// ===============================
-  /// Submit
-  /// ===============================
-
   Future<void> submit(TransactionDetailModel trx) async {
-    //tambahan
     final isPaid = trx.paymentStatus.toLowerCase() == 'paid';
 
     if (isPaid) {
@@ -192,7 +176,6 @@ class PaymentFormNotifier extends StateNotifier<PaymentFormState> {
 
       return;
     }
-    //tambahan
 
     final error = validate(trx);
 
@@ -222,7 +205,6 @@ class PaymentFormNotifier extends StateNotifier<PaymentFormState> {
     }
   }
 
-  /// Reset ketika BottomSheet ditutup
   void reset() {
     state = const PaymentFormState();
   }

@@ -6,6 +6,8 @@ class TransactionItemModel {
   final String unit;
 
   final int quantity;
+  final int qtyUnit;
+  final String satuanUnit;
 
   final double basePrice;
   final double price;
@@ -18,15 +20,15 @@ class TransactionItemModel {
     required this.productCode,
     required this.unit,
     required this.quantity,
+    required this.qtyUnit,
+    required this.satuanUnit,
     required this.basePrice,
     required this.price,
     required this.discount,
     required this.subtotal,
   });
 
-  factory TransactionItemModel.fromJson(
-    Map<String, dynamic> json,
-  ) {
+  factory TransactionItemModel.fromJson(Map<String, dynamic> json) {
     return TransactionItemModel(
       id: json['id'] ?? 0,
 
@@ -34,35 +36,14 @@ class TransactionItemModel {
       productCode: json['product_code'] ?? '',
       unit: json['unit'] ?? '',
 
-      quantity:
-          int.tryParse(
-            json['quantity'].toString(),
-          ) ??
-          0,
+      quantity: int.tryParse(json['quantity'].toString()) ?? 0,
+      qtyUnit: int.tryParse(json['qty_unit'].toString()) ?? 0,
+      satuanUnit:  json['satuan_unit'] ?? '',
 
-      basePrice:
-          double.tryParse(
-            json['base_price'].toString(),
-          ) ??
-          0,
-
-      price:
-          double.tryParse(
-            json['price'].toString(),
-          ) ??
-          0,
-
-      discount:
-          double.tryParse(
-            json['discount'].toString(),
-          ) ??
-          0,
-
-      subtotal:
-          double.tryParse(
-            json['subtotal'].toString(),
-          ) ??
-          0,
+      basePrice: double.tryParse(json['base_price'].toString()) ?? 0,
+      price: double.tryParse(json['price'].toString()) ?? 0,
+      discount: double.tryParse(json['discount'].toString()) ?? 0,
+      subtotal: double.tryParse(json['subtotal'].toString()) ?? 0,
     );
   }
 }

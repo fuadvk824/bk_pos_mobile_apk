@@ -27,7 +27,6 @@ class PaymentNotifier extends StateNotifier<PaymentState> {
     );
   }
 
-   
   void updateAmount(double amount, double maxAmount) {
     if (amount < 0) amount = 0;
 
@@ -38,6 +37,16 @@ class PaymentNotifier extends StateNotifier<PaymentState> {
     state = state.copyWith(
       payment: state.payment.copyWith(paymentAmount: amount),
     );
+  }
+
+  void updateNego(double value, double maxAmount) {
+    if (value < 0) {
+      value = 0;
+    }
+    if (value > maxAmount) {
+      value = maxAmount;
+    }
+    state = state.copyWith(payment: state.payment.copyWith(nego: value));
   }
 
   void clear() {

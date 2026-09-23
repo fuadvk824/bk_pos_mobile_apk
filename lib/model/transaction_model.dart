@@ -12,10 +12,8 @@ class TransactionModel {
   final double paidAmount;
   final double remainingAmount;
 
-  //tambahan
   final String transactionType;
-  //tambahan
-
+   
   TransactionModel({
     required this.id,
     required this.invoiceNumber,
@@ -47,9 +45,8 @@ class TransactionModel {
       paidAmount: double.tryParse(json['paid_amount'].toString()) ?? 0,
       remainingAmount:
           double.tryParse(json['remaining_amount'].toString()) ?? 0,
-      //tambahan
+       
       transactionType: json['transaction_type'] ?? 'normal',
-      //tambahan
     );
   }
 }

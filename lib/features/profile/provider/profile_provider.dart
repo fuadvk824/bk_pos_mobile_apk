@@ -42,6 +42,35 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
   Future<void> refresh() async {
     await load();
   }
+
+  String monthlyGrowthText(UserModel user) {
+    final currentMonth = DateTime.now().month;
+    final previousMonth = currentMonth == 1 ? 12 : currentMonth - 1;
+
+    final currentSales = user.monthlySales
+        .firstWhere(
+          (item) => item.month == currentMonth,
+          orElse: () => MonthlySales(month: currentMonth, total: 0),
+        )
+        .total;
+
+    final previousSales = user.monthlySales
+        .firstWhere(
+          (item) => item.month == previousMonth,
+          orElse: () => MonthlySales(month: previousMonth, total: 0),
+        )
+        .total;
+
+    if (previousSales == 0) {
+      return 'Belum ada data bulan lalu';
+    }
+
+    final percentage = ((currentSales - previousSales) / previousSales) * 100;
+
+    final sign = percentage >= 0 ? '+' : '';
+
+    return '$sign${percentage.toStringAsFixed(0)}% dari bulan lalu';
+  }
 }
 
 final profileProvider = StateNotifierProvider<ProfileNotifier, ProfileState>(

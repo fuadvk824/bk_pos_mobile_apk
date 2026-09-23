@@ -49,6 +49,8 @@ class ItemsCard extends StatelessWidget {
 
             ...List.generate(trx.items.length, (index) {
               final item = trx.items[index];
+              final showQtyUnit = item.quantity / item.qtyUnit != 1;
+              final qtyUnitText = showQtyUnit ? ' (${item.qtyUnit}${item.unit})' : '';
 
               return Padding(
                 padding: const EdgeInsets.only(bottom: 14),
@@ -89,8 +91,9 @@ class ItemsCard extends StatelessWidget {
 
                               Row(
                                 children: [
+                                   
                                   Text(
-                                    "${item.quantity} × ",
+                                    "${item.quantity} ${item.satuanUnit}$qtyUnitText × ",
                                     style: TextStyle(
                                       color: Colors.grey.shade600,
                                       fontSize: 12,

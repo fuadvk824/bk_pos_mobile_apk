@@ -98,7 +98,6 @@ class PdfReceiptService {
               pw.Divider(),
               pw.SizedBox(height: 3),
 
-              // ITEM
               ...transaction.items.map((item) {
                 final quantity = item.quantity;
                 final unitPrice = item.price;

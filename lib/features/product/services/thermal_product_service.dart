@@ -9,9 +9,6 @@ import 'package:image/image.dart';
 import 'package:print_bluetooth_thermal/print_bluetooth_thermal.dart';
 
 class ThermalProductService {
-  // ============================================================
-  // CARI PRINTER RPP02N
-  // ============================================================
 
   static Future<BluetoothInfo?> findPrinter() async {
     try {
@@ -44,10 +41,6 @@ class ThermalProductService {
     }
   }
 
-  // ============================================================
-  // CEK STATUS KONEKSI PRINTER
-  // ============================================================
-
   static Future<bool> isPrinterConnected() async {
     try {
       return await PrintBluetoothThermal.connectionStatus;
@@ -57,10 +50,6 @@ class ThermalProductService {
       return false;
     }
   }
-
-  // ============================================================
-  // DISCONNECT PRINTER
-  // ============================================================
 
   static Future<void> disconnectPrinter() async {
     try {
@@ -76,16 +65,10 @@ class ThermalProductService {
     }
   }
 
-  // ============================================================
-  // CONNECT PRINTER
-  // ============================================================
-
   static Future<ProductPrintResult> connectPrinter() async {
     try {
-      // 1. CEK BLUETOOTH HP
 
       final bluetoothEnabled = await PrintBluetoothThermal.bluetoothEnabled;
-
       if (!bluetoothEnabled) {
         return ProductPrintResult(
           success: false,
@@ -93,10 +76,7 @@ class ThermalProductService {
         );
       }
 
-      // 2. CARI PRINTER
-
       final printer = await findPrinter();
-
       if (printer == null) {
         return ProductPrintResult(
           success: false,
@@ -106,10 +86,7 @@ class ThermalProductService {
         );
       }
 
-      // 3. CEK KONEKSI LAMA
-
       final alreadyConnected = await PrintBluetoothThermal.connectionStatus;
-
       if (alreadyConnected) {
         return ProductPrintResult(
           success: true,
@@ -117,14 +94,11 @@ class ThermalProductService {
         );
       }
 
-      // 4. DISCONNECT KONEKSI LAMA
       try {
         await PrintBluetoothThermal.disconnect;
       } catch (_) {}
 
       await Future.delayed(const Duration(milliseconds: 500));
-
-      // 5. CONNECT
 
       debugPrint(
         'Mencoba connect ke printer: '
@@ -145,10 +119,7 @@ class ThermalProductService {
         );
       }
 
-      // 6. VERIFIKASI KONEKSI
-
       await Future.delayed(const Duration(milliseconds: 500));
-
       final verified = await PrintBluetoothThermal.connectionStatus;
 
       if (!verified) {
@@ -172,17 +143,11 @@ class ThermalProductService {
     }
   }
 
-  // ============================================================
-  // PRINT PRODUCT PRICE
-  // ============================================================
-
   static Future<ProductPrintResult> printProductPrice({
     required ProductModel product,
     required GlobalKey printKey,
   }) async {
     try {
-      // 1. PASTIKAN PRINTER CONNECT
-
       final connected = await isPrinterConnected();
 
       if (!connected) {
@@ -193,11 +158,7 @@ class ThermalProductService {
         }
       }
 
-      // 2. TUNGGU WIDGET SELESAI RENDER
-
       await Future.delayed(const Duration(milliseconds: 500));
-
-      // 3. CAPTURE DESAIN PRODUK
 
       final imageBytes = await _captureProductPrice(printKey);
 
@@ -208,12 +169,7 @@ class ThermalProductService {
         );
       }
 
-      // 4. CONVERT IMAGE KE ESC/POS
-
       final bytes = await _convertToEscPos(imageBytes);
-
-      // 5. KIRIM KE PRINTER
-
       final result = await PrintBluetoothThermal.writeBytes(bytes);
 
       if (!result) {
@@ -243,10 +199,6 @@ class ThermalProductService {
     }
   }
 
-  // ============================================================
-  // CAPTURE WIDGET MENJADI IMAGE
-  // ============================================================
-
   static Future<Uint8List?> _captureProductPrice(GlobalKey printKey) async {
     try {
       final boundary =
@@ -257,7 +209,6 @@ class ThermalProductService {
       }
 
       final image = await boundary.toImage(pixelRatio: 2.0);
-
       final byteData = await image.toByteData(format: ImageByteFormat.png);
 
       return byteData?.buffer.asUint8List();
@@ -268,10 +219,6 @@ class ThermalProductService {
     }
   }
 
-  // ============================================================
-  // CONVERT IMAGE KE ESC/POS
-  // ============================================================
-
   static Future<List<int>> _convertToEscPos(Uint8List imageBytes) async {
     final profile = await CapabilityProfile.load();
     final generator = Generator(PaperSize.mm80, profile);
@@ -281,13 +228,6 @@ class ThermalProductService {
       throw Exception('Gagal membaca image produk.');
     }
 
-    // final croppedImage = copyCrop(
-    //   image,
-    //   x: 0,
-    //   y: 20,
-    //   width: image.width,
-    //   height: image.height - 20,
-    // );
     final bytes = <int>[];
 
     bytes.addAll(generator.reset());
@@ -298,10 +238,6 @@ class ThermalProductService {
     return bytes;
   }
 }
-
-// ============================================================
-// PRINT RESULT
-// ============================================================
 
 class ProductPrintResult {
   final bool success;

@@ -24,7 +24,6 @@ class PaymentModel {
             json['amount'].toString(),
           ) ??
           0,
-
       paymentMethod:
           json['payment_method'] ?? '',
 
