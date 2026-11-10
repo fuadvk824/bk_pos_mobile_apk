@@ -1,3 +1,4 @@
+import 'package:bk_pos/core/storage/token_manager.dart';
 import 'package:bk_pos/features/update/presentatioon/update_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,17 +9,13 @@ import '../features/auth/provider/auth_provider.dart';
 import '../features/update/service/update_service.dart';
 
 class AppRouter extends ConsumerStatefulWidget {
-  const AppRouter({
-    super.key,
-  });
+  const AppRouter({super.key});
 
   @override
-  ConsumerState<AppRouter> createState() =>
-      _AppRouterState();
+  ConsumerState<AppRouter> createState() => _AppRouterState();
 }
 
 class _AppRouterState extends ConsumerState<AppRouter> {
-
   final UpdateService updateService = UpdateService();
   bool _checkedUpdate = false;
 
@@ -26,8 +23,7 @@ class _AppRouterState extends ConsumerState<AppRouter> {
   void initState() {
     super.initState();
 
-    WidgetsBinding.instance
-        .addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkUpdate();
     });
   }
@@ -48,24 +44,12 @@ class _AppRouterState extends ConsumerState<AppRouter> {
         currentVersion,
       );
 
-      debugPrint(
-        '====================================',
-      );
-      debugPrint(
-        'Current Version : $currentVersion',
-      );
-      debugPrint(
-        'Latest Version  : ${latest.version}',
-      );
-      debugPrint(
-        'APK URL         : ${latest.apkUrl}',
-      );
-      debugPrint(
-        'Has Update      : $hasUpdate',
-      );
-      debugPrint(
-        '====================================',
-      );
+      debugPrint('====================================');
+      debugPrint('Current Version : $currentVersion');
+      debugPrint('Latest Version  : ${latest.version}');
+      debugPrint('APK URL         : ${latest.apkUrl}');
+      debugPrint('Has Update      : $hasUpdate');
+      debugPrint('====================================');
 
       if (!mounted) {
         return;
@@ -85,35 +69,63 @@ class _AppRouterState extends ConsumerState<AppRouter> {
         );
       }
     } catch (e, stackTrace) {
-      debugPrint(
-        'Check update error: $e',
-      );
+      debugPrint('Check update error: $e');
 
-      debugPrintStack(
-        stackTrace: stackTrace,
-      );
+      debugPrintStack(stackTrace: stackTrace);
     }
   }
 
   @override
-  Widget build(
-    BuildContext context,
-  ) {
+  Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
 
     return authState.when(
       loading: () {
-        return const Scaffold(
-          body: Center(
-            child: CircularProgressIndicator(),
-          ),
-        );
+        return const Scaffold(body: Center(child: CircularProgressIndicator()));
       },
 
       error: (e, s) {
-        return const AuthLoginScreen();
-      },
+        return Scaffold(
+          body: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.cloud_off, size: 60, color: Colors.orange),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Gagal menghubungkan ke server',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Periksa koneksi internet dan coba kembali.',
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: () {
+                      ref.read(authProvider.notifier).loadUser();
+                    },
+                    child: const Text('Coba Lagi'),
+                  ),
+                  TextButton(
+                    onPressed: () async {
+                      await TokenManager.clear();
 
+                      if (!context.mounted) return;
+
+                      ref.invalidate(authProvider);
+                    },
+                    child: const Text('Login Ulang'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
       data: (user) {
         if (user == null) {
           return const AuthLoginScreen();

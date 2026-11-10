@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/storage/token_manager.dart';
@@ -49,22 +50,52 @@ class AuthNotifier extends StateNotifier<AsyncValue<UserModel?>> {
 
   Future<void> loadUser() async {
     try {
+      // Periksa token lokal terlebih dahulu.
       if (TokenManager.token == null || TokenManager.isExpired) {
         await TokenManager.clear();
+
+        if (!mounted) return;
 
         state = const AsyncValue.data(null);
         return;
       }
 
-      final user = await repo.me();
+      // Request API dibatasi maksimal 15 detik.
+      final user = await repo.me().timeout(const Duration(seconds: 15));
+
+      if (!mounted) return;
 
       state = AsyncValue.data(user);
 
       _startTokenExpiryTimer();
-    } catch (_) {
-      await TokenManager.clear();
+    } on DioException catch (e, st) {
+      final statusCode = e.response?.statusCode;
 
-      state = const AsyncValue.data(null);
+      // Token memang tidak valid.
+      if (statusCode == 401 || statusCode == 403) {
+        await TokenManager.clear();
+
+        if (!mounted) return;
+
+        state = const AsyncValue.data(null);
+        return;
+      }
+
+      // Error jaringan/server tidak boleh menghapus token.
+      if (!mounted) return;
+
+      state = AsyncValue.error(e, st);
+    } on TimeoutException catch (e, st) {
+      // Request terlalu lama.
+      // Token tetap disimpan.
+      if (!mounted) return;
+
+      state = AsyncValue.error(e, st);
+    } catch (e, st) {
+      // Error lainnya juga jangan langsung menghapus token.
+      if (!mounted) return;
+
+      state = AsyncValue.error(e, st);
     }
   }
 
@@ -109,4 +140,3 @@ class AuthNotifier extends StateNotifier<AsyncValue<UserModel?>> {
     super.dispose();
   }
 }
- 

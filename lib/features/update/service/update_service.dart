@@ -149,28 +149,5 @@ class UpdateService {
       rethrow;
     }
   }
-  // Future<void> downloadAndInstall(
-  //   String apkUrl, {
-  //   required Function(double progress) onProgress,
-  // }) async {
-  //   final dir = await getExternalStorageDirectory();
-
-  //   if (dir == null) {
-  //     throw Exception('Storage tidak tersedia');
-  //   }
-
-  //   final path = '${dir.path}/bk_pos_update.apk';
-
-  //   await Dio().download(
-  //     apkUrl,
-  //     path,
-  //     onReceiveProgress: (received, total) {
-  //       if (total > 0) {
-  //         onProgress(received / total);
-  //       }
-  //     },
-  //   );
-
-  //   await OpenFilex.open(path);
-  // }
+   
 }

@@ -11,6 +11,13 @@ class ProductGrid extends ConsumerWidget {
     final state = ref.watch(productProvider);
 
     if (state.products.isEmpty) {
+      if (state.isLoading) {
+        return const SliverFillRemaining(
+          hasScrollBody: false,
+          child: Center(child: CircularProgressIndicator()),
+        );
+      }
+
       final isBackorder = state.selectedFilter == ProductFilter.backorder;
 
       return SliverFillRemaining(
@@ -77,4 +84,3 @@ class ProductGrid extends ConsumerWidget {
     );
   }
 }
- 

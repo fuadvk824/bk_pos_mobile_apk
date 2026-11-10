@@ -15,6 +15,7 @@ class ProductScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final notifier = ref.read(productProvider.notifier);
+    final state = ref.watch(productProvider);
 
     return Scaffold(
       floatingActionButton: FloatingActionButton(
@@ -25,7 +26,7 @@ class ProductScreen extends ConsumerWidget {
             MaterialPageRoute(builder: (_) => const ProductScanScreen()),
           );
         },
-       
+
         child: Icon(Icons.qr_code_scanner, size: 28, color: AppColors.dark),
       ),
 
@@ -37,11 +38,37 @@ class ProductScreen extends ConsumerWidget {
               ref.read(profileProvider.notifier).refresh(),
             ]);
           },
-          child: CustomScrollView(
-            slivers: [
-              SliverPinnedHeader(child: ProductFilterSection()),
-              MultiSliver(children: [ProductGrid()]),
-            ],
+
+          // child: CustomScrollView(
+          //   slivers: [
+          //     SliverPinnedHeader(child: ProductFilterSection()),
+          //     MultiSliver(children: [ProductGrid()]),
+          //   ],
+          // ),
+          child: NotificationListener<ScrollNotification>(
+            onNotification: (notification) {
+              if (notification.metrics.extentAfter < 300) {
+                notifier.loadMore();
+              }
+
+              return false;
+            },
+            child: CustomScrollView(
+              slivers: [
+                SliverPinnedHeader(child: ProductFilterSection()),
+
+                MultiSliver(children: [ProductGrid()]),
+
+                // Loading produk berikutnya
+                if (state.isLoadingMore)
+                  const SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.all(20),
+                      child: Center(child: CircularProgressIndicator()),
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
       ),

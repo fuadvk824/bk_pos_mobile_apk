@@ -261,7 +261,7 @@ class _ThermalReceiptScreenState extends State<ThermalReceiptScreen> {
                     padding: const EdgeInsets.only(
                       left: 8,
                       right: 8,
-                      top: 0,
+                      top: 8,
                       bottom: 50,
                     ),
                     color: AppColors.light,
@@ -307,19 +307,30 @@ class _ThermalReceiptScreenState extends State<ThermalReceiptScreen> {
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
+                                   const SizedBox(height: 1),
+                                  Text(
+                                    'No. Telp: ${transaction.storePhone}',
+                                    style: const TextStyle(
+                                      color: AppColors.dark,
+                                      fontSize: 8,
+                                      height: 1.2,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
 
-                            const SizedBox(width: 8),
+                            const SizedBox(width: 5),
 
                             SizedBox(
                               width: 100,
-                              height: 65,
+                              height: 48,
 
                               child: Image.asset(
                                 'assets/images/logo.jpeg',
-                                fit: BoxFit.contain,
+                                // fit: BoxFit.contain,
+                                 fit: BoxFit.fill,
                               ),
                             ),
                           ],
@@ -340,6 +351,7 @@ class _ThermalReceiptScreenState extends State<ThermalReceiptScreen> {
                           label: 'Kasir',
                           value: transaction.printedBy ?? '-',
                         ),
+                        
 
                         const SizedBox(height: 6),
                         const Divider(color: AppColors.dark, height: 1),
@@ -414,7 +426,7 @@ class _ThermalReceiptScreenState extends State<ThermalReceiptScreen> {
 
                         _InfoRow(
                           label: 'Point/Diskon',
-                          value: '-${currency.format(transaction.pointsUsed)}',
+                          value: '-${currency.format(transaction.nego + transaction.pointsUsed)}',
                         ),
 
                         const SizedBox(height: 6),
@@ -443,17 +455,7 @@ class _ThermalReceiptScreenState extends State<ThermalReceiptScreen> {
                         const SizedBox(height: 8),
 
                         const Text(
-                          'Terima kasih, selamat belanja kembali',
-                          textAlign: TextAlign.center,
-
-                          style: TextStyle(
-                            color: AppColors.dark,
-                            fontSize: 8,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const Text(
-                          'Batas waktu return max 7 hari. Syarat dan ketentuan berlaku',
+                          'Informasi & Layanan Pelanggan\nTerima kasih, selamat berbelanja kembali!',
                           textAlign: TextAlign.center,
 
                           style: TextStyle(
@@ -464,6 +466,7 @@ class _ThermalReceiptScreenState extends State<ThermalReceiptScreen> {
                         ),
                         const Text(
                           'Barang yang sudah dibeli tidak dapat dikembalikan',
+                          // 'Kebijakan produk: Barang yang sudah dibeli tidak bisa direturn',
                           textAlign: TextAlign.center,
 
                           style: TextStyle(
@@ -472,11 +475,12 @@ class _ThermalReceiptScreenState extends State<ThermalReceiptScreen> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
+                       
 
                         SizedBox(height: 5),
 
                         const Text(
-                          'Layanan Pelanggan Bisakulak',
+                          'Layanan Pelanggan Bisa Kulak',
                           textAlign: TextAlign.center,
 
                           style: TextStyle(
@@ -515,7 +519,7 @@ class _ThermalReceiptScreenState extends State<ThermalReceiptScreen> {
 
                             Flexible(
                               child: Text(
-                                transaction.storePhone ?? '0851-7959-5011',
+                                '085173372019',
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 textAlign: TextAlign.left,
@@ -528,6 +532,92 @@ class _ThermalReceiptScreenState extends State<ThermalReceiptScreen> {
                             ),
                           ],
                         ),
+                        // const Text(
+                        //   'Terima kasih, selamat belanja kembali',
+                        //   textAlign: TextAlign.center,
+
+                        //   style: TextStyle(
+                        //     color: AppColors.dark,
+                        //     fontSize: 8,
+                        //     fontWeight: FontWeight.bold,
+                        //   ),
+                        // ),
+                        // const Text(
+                        //   'Batas waktu return max 7 hari. Syarat dan ketentuan berlaku',
+                        //   textAlign: TextAlign.center,
+
+                        //   style: TextStyle(
+                        //     color: AppColors.dark,
+                        //     fontSize: 8,
+                        //     fontWeight: FontWeight.bold,
+                        //   ),
+                        // ),
+                        // const Text(
+                        //   'Barang yang sudah dibeli tidak dapat dikembalikan',
+                        //   textAlign: TextAlign.center,
+
+                        //   style: TextStyle(
+                        //     color: AppColors.dark,
+                        //     fontSize: 8,
+                        //     fontWeight: FontWeight.bold,
+                        //   ),
+                        // ),
+
+                        // SizedBox(height: 5),
+
+                        // const Text(
+                        //   'Layanan Pelanggan Bisakulak',
+                        //   textAlign: TextAlign.center,
+
+                        //   style: TextStyle(
+                        //     color: AppColors.dark,
+                        //     fontSize: 8,
+                        //     fontWeight: FontWeight.bold,
+                        //   ),
+                        // ),
+
+                        // Row(
+                        //   mainAxisAlignment: MainAxisAlignment.center,
+                        //   children: [
+                        //     Flexible(
+                        //       child: Text(
+                        //         transaction.storeEmail ??
+                        //             'bisakulakpusat@gmail.com',
+                        //         maxLines: 1,
+                        //         overflow: TextOverflow.ellipsis,
+                        //         textAlign: TextAlign.right,
+                        //         style: const TextStyle(
+                        //           color: AppColors.dark,
+                        //           fontSize: 8,
+                        //           fontWeight: FontWeight.bold,
+                        //         ),
+                        //       ),
+                        //     ),
+
+                        //     const Text(
+                        //       '  •  ',
+                        //       style: TextStyle(
+                        //         color: AppColors.dark,
+                        //         fontSize: 8,
+                        //         fontWeight: FontWeight.bold,
+                        //       ),
+                        //     ),
+
+                        //     Flexible(
+                        //       child: Text(
+                        //         transaction.storePhone ?? '0851-7959-5011',
+                        //         maxLines: 1,
+                        //         overflow: TextOverflow.ellipsis,
+                        //         textAlign: TextAlign.left,
+                        //         style: const TextStyle(
+                        //           color: AppColors.dark,
+                        //           fontSize: 8,
+                        //           fontWeight: FontWeight.bold,
+                        //         ),
+                        //       ),
+                        //     ),
+                        //   ],
+                        // ),
                       ],
                     ),
                   ),

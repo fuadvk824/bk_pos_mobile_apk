@@ -2,12 +2,43 @@ import 'package:bk_pos/core/network/dio_client.dart';
 import 'package:bk_pos/model/product_model.dart';
 import 'package:dio/dio.dart';
 
-class ProductRepository {
-  Future<List<ProductModel>> getProducts() async {
-    final res = await DioClient.dio.get('/products');
-    final List data = res.data['data'];
+class ProductPage {
+  final List<ProductModel> products;
+  final int currentPage;
+  final int lastPage;
+  final bool hasMorePages;
 
-    return data.map((e) => ProductModel.fromJson(e)).toList();
+  ProductPage({
+    required this.products,
+    required this.currentPage,
+    required this.lastPage,
+    required this.hasMorePages,
+  });
+}
+
+class ProductRepository {
+  // Future<List<ProductModel>> getProducts() async {
+  //   final res = await DioClient.dio.get('/products');
+  //   final List data = res.data['data'];
+
+  //   return data.map((e) => ProductModel.fromJson(e)).toList();
+  // }
+
+  Future<ProductPage> getProducts({int page = 1}) async {
+    final res = await DioClient.dio.get(
+      '/products',
+      queryParameters: {'page': page},
+    );
+
+    final List data = res.data['data'];
+    final pagination = res.data['pagination'];
+
+    return ProductPage(
+      products: data.map((e) => ProductModel.fromJson(e)).toList(),
+      currentPage: pagination['current_page'],
+      lastPage: pagination['last_page'],
+      hasMorePages: pagination['has_more_pages'],
+    );
   }
 
   Future<ProductModel?> getProductByQr(

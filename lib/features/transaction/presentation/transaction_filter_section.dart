@@ -396,32 +396,30 @@ class _TransactionFilterDialogState
   Widget _typeOption(TransactionTypeFilter type) {
     final selected = selectedType == type;
 
-    return Expanded(
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: () {
-          setState(() {
-            selectedType = type;
-          });
-        },
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 11),
-          decoration: BoxDecoration(
-            color: selected ? AppColors.primary : Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: selected ? AppColors.primary : Colors.grey.shade300,
-            ),
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: () {
+        setState(() {
+          selectedType = type;
+        });
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 11),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.primary : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: selected ? AppColors.primary : Colors.grey.shade300,
           ),
-          child: Center(
-            child: Text(
-              getTypeLabel(type),
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: selected ? AppColors.dark : Colors.grey.shade700,
-              ),
+        ),
+        child: Center(
+          child: Text(
+            getTypeLabel(type),
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: selected ? AppColors.dark : Colors.grey.shade700,
             ),
           ),
         ),
@@ -496,19 +494,18 @@ class _TransactionFilterDialogState
               const SizedBox(height: 10),
 
               Row(
-                children: TransactionTypeFilter.values
-                    .map(
-                      (type) => Padding(
-                        padding: EdgeInsets.only(
-                          right: type != TransactionTypeFilter.backorder
-                              ? 8
-                              : 0,
-                        ),
-                        child: _typeOption(type),
+                children: TransactionTypeFilter.values.map((type) {
+                  return Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.only(
+                        right: type != TransactionTypeFilter.backorder ? 8 : 0,
                       ),
-                    )
-                    .toList(),
+                      child: _typeOption(type),
+                    ),
+                  );
+                }).toList(),
               ),
+              
               const SizedBox(height: 12),
 
               Align(
@@ -521,9 +518,11 @@ class _TransactionFilterDialogState
 
               const SizedBox(height: 10),
 
-              Flexible(
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 300),
                 child: SingleChildScrollView(
                   child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: TransactionTimeFilter.values
                         .map(_timeOption)
                         .toList(),

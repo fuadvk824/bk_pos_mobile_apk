@@ -18,12 +18,19 @@ class ProductState {
 
   final bool isLoading;
 
+  final int currentPage;
+  final bool hasMore;
+  final bool isLoadingMore;
+
   const ProductState({
     this.allProducts = const [],
     this.products = const [],
     this.selectedFilter = ProductFilter.all,
     this.search = '',
     this.isLoading = false,
+    this.currentPage = 0,
+    this.hasMore = true,
+    this.isLoadingMore = false,
   });
 
   ProductState copyWith({
@@ -32,6 +39,9 @@ class ProductState {
     ProductFilter? selectedFilter,
     String? search,
     bool? isLoading,
+    int? currentPage,
+    bool? hasMore,
+    bool? isLoadingMore,
   }) {
     return ProductState(
       allProducts: allProducts ?? this.allProducts,
@@ -39,6 +49,9 @@ class ProductState {
       selectedFilter: selectedFilter ?? this.selectedFilter,
       search: search ?? this.search,
       isLoading: isLoading ?? this.isLoading,
+      currentPage: currentPage ?? this.currentPage,
+      hasMore: hasMore ?? this.hasMore,
+      isLoadingMore: isLoadingMore ?? this.isLoadingMore,
     );
   }
 }
@@ -49,19 +62,52 @@ class ProductNotifier extends StateNotifier<ProductState> {
   ProductNotifier(this.repo) : super(const ProductState()) {
     loadProducts();
   }
- 
+
+  // Future<void> loadProducts() async {
+  //   if (state.selectedFilter == ProductFilter.backorder) {
+  //     state = state.copyWith(isLoading: false, products: []);
+  //     return;
+  //   }
+
+  //   state = state.copyWith(isLoading: true);
+
+  //   try {
+  //     final products = await repo.getProducts();
+
+  //     state = state.copyWith(isLoading: false, allProducts: products);
+
+  //     _applyFilter();
+  //   } catch (e) {
+  //     state = state.copyWith(isLoading: false);
+  //     rethrow;
+  //   }
+  // }
+
   Future<void> loadProducts() async {
+    if (state.isLoading || state.isLoadingMore) return;
+
     if (state.selectedFilter == ProductFilter.backorder) {
       state = state.copyWith(isLoading: false, products: []);
       return;
     }
 
-    state = state.copyWith(isLoading: true);
+    state = state.copyWith(
+      isLoading: true,
+      currentPage: 0,
+      hasMore: true,
+      allProducts: [],
+      products: [],
+    );
 
     try {
-      final products = await repo.getProducts();
+      final result = await repo.getProducts(page: 1);
 
-      state = state.copyWith(isLoading: false, allProducts: products);
+      state = state.copyWith(
+        isLoading: false,
+        allProducts: result.products,
+        currentPage: result.currentPage,
+        hasMore: result.hasMorePages,
+      );
 
       _applyFilter();
     } catch (e) {
@@ -69,7 +115,37 @@ class ProductNotifier extends StateNotifier<ProductState> {
       rethrow;
     }
   }
- 
+
+  Future<void> loadMore() async {
+    if (state.isLoading ||
+        state.isLoadingMore ||
+        !state.hasMore ||
+        state.selectedFilter == ProductFilter.backorder) {
+      return;
+    }
+
+    state = state.copyWith(isLoadingMore: true);
+
+    try {
+      final nextPage = state.currentPage + 1;
+
+      final result = await repo.getProducts(page: nextPage);
+
+      final updatedProducts = [...state.allProducts, ...result.products];
+
+      state = state.copyWith(
+        allProducts: updatedProducts,
+        currentPage: result.currentPage,
+        hasMore: result.hasMorePages,
+        isLoadingMore: false,
+      );
+
+      _applyFilter();
+    } catch (e) {
+      state = state.copyWith(isLoadingMore: false);
+    }
+  }
+
   Future<ProductModel?> findByQr(String qr) {
     final isBackorder = state.selectedFilter == ProductFilter.backorder;
 
@@ -157,4 +233,3 @@ class ProductNotifier extends StateNotifier<ProductState> {
 final productProvider = StateNotifierProvider<ProductNotifier, ProductState>(
   (ref) => ProductNotifier(ref.read(productRepositoryProvider)),
 );
- 

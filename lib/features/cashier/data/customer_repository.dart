@@ -12,4 +12,4 @@ class CustomerRepository {
         .map((e) => CustomerModel.fromJson(e))
         .toList();
   }
-}
+}  
