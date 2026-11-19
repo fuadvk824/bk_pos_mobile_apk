@@ -17,19 +17,18 @@ class ProductPage {
 }
 
 class ProductRepository {
-  // Future<List<ProductModel>> getProducts() async {
-  //   final res = await DioClient.dio.get('/products');
-  //   final List data = res.data['data'];
+  Future<ProductPage> getProducts({
+    int page = 1,
+    String search = '',
+    String? filter,
+  }) async {
+    final Map<String, dynamic> params = {'page': page, 'search': search};
 
-  //   return data.map((e) => ProductModel.fromJson(e)).toList();
-  // }
+    if (filter != null) {
+      params['filter'] = filter;
+    }
 
-  Future<ProductPage> getProducts({int page = 1}) async {
-    final res = await DioClient.dio.get(
-      '/products',
-      queryParameters: {'page': page},
-    );
-
+    final res = await DioClient.dio.get('/products', queryParameters: params);
     final List data = res.data['data'];
     final pagination = res.data['pagination'];
 

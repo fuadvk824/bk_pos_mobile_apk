@@ -110,7 +110,9 @@ class _ProductFilterSectionState extends ConsumerState<ProductFilterSection> {
 
                 Badge(
                   isLabelVisible: cart.items.isNotEmpty,
-                  backgroundColor: cart.isBackorder ? AppColors.primary : AppColors.secondary,
+                  backgroundColor: cart.isBackorder
+                      ? AppColors.primary
+                      : AppColors.secondary,
                   label: Text(
                     '${cart.items.length}',
                     style: const TextStyle(
@@ -148,7 +150,15 @@ class _ProductFilterSectionState extends ConsumerState<ProductFilterSection> {
                   return ChoiceChip(
                     selected: state.selectedFilter == filter,
                     label: Text(_label(filter)),
-                    onSelected: (_) => notifier.setFilter(filter),
+                    onSelected: (selected) {
+                      if (!selected) return;
+
+                      _searchController.clear();
+
+                      notifier.setFilter(filter);
+
+                      setState(() {});
+                    },
 
                     selectedColor: AppColors.primary,
                     backgroundColor: AppColors.transparent,
@@ -194,8 +204,6 @@ class _ProductFilterSectionState extends ConsumerState<ProductFilterSection> {
 
       case ProductFilter.bestSeller:
         return "Best Seller";
-      
     }
   }
 }
-

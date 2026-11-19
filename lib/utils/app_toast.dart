@@ -31,7 +31,7 @@ class AppToast {
     String? description,
   }) {
     toastification.showCustom(
-      autoCloseDuration: const Duration(milliseconds: 1250),
+      autoCloseDuration: const Duration(milliseconds: 1300),
       animationDuration: const Duration(milliseconds: 300),
       alignment: Alignment.topRight,
       direction: TextDirection.ltr,
@@ -39,7 +39,7 @@ class AppToast {
         final screenWidth = MediaQuery.of(context).size.width;
 
         return Container(
-          width: screenWidth - 32,
+          width: screenWidth - 32, 
           margin: const EdgeInsets.only(
             left: 16,
             right: 16,

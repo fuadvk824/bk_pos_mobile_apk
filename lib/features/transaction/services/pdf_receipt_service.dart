@@ -44,7 +44,6 @@ class PdfReceiptService {
           return pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.stretch,
             children: [
-               
               pw.Row(
                 crossAxisAlignment: pw.CrossAxisAlignment.center,
                 children: [
@@ -54,24 +53,26 @@ class PdfReceiptService {
                       mainAxisSize: pw.MainAxisSize.min,
                       children: [
                         pw.Text(
-                          transaction.storeName ?? '-',
+                          transaction.storeView ?? 'Bisa Kulak Gresik',
                           maxLines: 1,
                           overflow: pw.TextOverflow.clip,
                           style: pw.TextStyle(
-                            fontSize: 10,
+                            fontSize: 8,
                             fontWeight: pw.FontWeight.bold,
                           ),
                         ),
 
                         pw.SizedBox(height: 2),
                         pw.Text(
-                          transaction.storeAddress ?? '-',
-                          maxLines: 3,
-                          style: pw.TextStyle(
-                            fontSize: 5,
-                            height: 1.2,
-                            fontWeight: pw.FontWeight.bold,
-                          ),
+                          transaction.storeAddress ??
+                              'Jl. Raya kepatihan No.49, Kecamatan Menganti, Kabupaten Gresik, Jawa Timur',
+                          maxLines: 2,
+                          style: pw.TextStyle(fontSize: 4, height: 1.2),
+                        ),
+                        pw.SizedBox(height: 1),
+                        pw.Text(
+                          'No. Telp: ${transaction.storePhone}',
+                          style: pw.TextStyle(fontSize: 4, height: 1.2),
                         ),
                       ],
                     ),
@@ -87,17 +88,32 @@ class PdfReceiptService {
                 ],
               ),
 
-              pw.SizedBox(height: 3),
-              pw.Divider(),
+              pw.SizedBox(height: 4),
+              pw.Container(
+                height: 0.2,
+                decoration: const pw.BoxDecoration(
+                  border: pw.Border(
+                    bottom: pw.BorderSide(color: PdfColors.black, width: 0.2),
+                  ),
+                ),
+              ),
+              pw.SizedBox(height: 2),
 
               _infoRow('Invoice', transaction.invoiceNumber),
               _infoRow('Tanggal', printedDate),
               _infoRow('Kasir', transaction.printedBy ?? '-'),
 
-              pw.SizedBox(height: 3),
-              pw.Divider(),
-              pw.SizedBox(height: 3),
+              pw.SizedBox(height: 2),
+              pw.Container(
+                height: 0.2,
+                decoration: const pw.BoxDecoration(
+                  border: pw.Border(
+                    bottom: pw.BorderSide(color: PdfColors.black, width: 0.2),
+                  ),
+                ),
+              ),
 
+              pw.SizedBox(height: 2),
               ...transaction.items.map((item) {
                 final quantity = item.quantity;
                 final unitPrice = item.price;
@@ -112,10 +128,7 @@ class PdfReceiptService {
                     children: [
                       pw.Text(
                         item.productName,
-                        style: pw.TextStyle(
-                          fontSize: 6,
-                          fontWeight: pw.FontWeight.bold,
-                        ),
+                        style: pw.TextStyle(fontSize: 5),
                       ),
 
                       pw.Row(
@@ -124,18 +137,12 @@ class PdfReceiptService {
                         children: [
                           pw.Text(
                             '${quantity}x @${currency.format(unitPrice)}',
-                            style: pw.TextStyle(
-                              fontSize: 6,
-                              fontWeight: pw.FontWeight.bold,
-                            ),
+                            style: pw.TextStyle(fontSize: 5),
                           ),
 
                           pw.Text(
                             currency.format(itemTotal),
-                            style: pw.TextStyle(
-                              fontSize: 6,
-                              fontWeight: pw.FontWeight.bold,
-                            ),
+                            style: pw.TextStyle(fontSize: 5),
                           ),
                         ],
                       ),
@@ -144,66 +151,80 @@ class PdfReceiptService {
                 );
               }),
 
-              pw.SizedBox(height: 3),
-              pw.Divider(),
-              pw.SizedBox(height: 3),
-
-              _infoRow('Subtotal', currency.format(transaction.subtotal)),
-              _infoRow('Ongkir', currency.format(transaction.shippingCost)),
-              _infoRow('Point', '-${currency.format(transaction.pointsUsed)}'),
-
-              pw.SizedBox(height: 3),
-              _infoRow('TOTAL', currency.format(transaction.total), bold: true),
-
-              pw.SizedBox(height: 3),
-              pw.Divider(),
-              pw.SizedBox(height: 3),
-
-              pw.Text(
-                'Terima kasih, selamat belanja kembali',
-                textAlign: pw.TextAlign.center,
-                style: pw.TextStyle(
-                  fontSize: 5,
-                  fontWeight: pw.FontWeight.bold,
+              pw.SizedBox(height: 2),
+              pw.Container(
+                height: 0.2,
+                decoration: const pw.BoxDecoration(
+                  border: pw.Border(
+                    bottom: pw.BorderSide(color: PdfColors.black, width: 0.2),
+                  ),
                 ),
               ),
 
-              pw.Text(
-                'Batas waktu return max 7 hari. Syarat dan ketentuan berlaku',
-                textAlign: pw.TextAlign.center,
-                style: pw.TextStyle(
-                  fontSize: 5,
-                  fontWeight: pw.FontWeight.bold,
+              pw.SizedBox(height: 2),
+              _infoRow('Subtotal', currency.format(transaction.subtotal)),
+              _infoRow('Ongkir', currency.format(transaction.shippingCost)),
+              _infoRow(
+                'Point/Diskon',
+                '-${currency.format(transaction.pointsUsed + transaction.nego)}',
+              ),
+
+              pw.SizedBox(height: 2),
+              _infoRow('TOTAL', currency.format(transaction.total), bold: true),
+
+              pw.SizedBox(height: 2),
+              pw.Container(
+                height: 0.2,
+                decoration: const pw.BoxDecoration(
+                  border: pw.Border(
+                    bottom: pw.BorderSide(color: PdfColors.black, width: 0.2),
+                  ),
                 ),
+              ),
+
+              pw.SizedBox(height: 4),
+              pw.Text(
+                'Informasi & Layanan Pelanggan\nTerima kasih, selamat berbelanja kembali!',
+                textAlign: pw.TextAlign.center,
+                style: pw.TextStyle(fontSize: 5),
               ),
 
               pw.Text(
                 'Barang yang sudah dibeli tidak dapat dikembalikan',
                 textAlign: pw.TextAlign.center,
-                style: pw.TextStyle(
-                  fontSize: 5,
-                  fontWeight: pw.FontWeight.bold,
-                ),
+                style: pw.TextStyle(fontSize: 5),
               ),
 
-              pw.SizedBox(height: 3),
-
+              pw.SizedBox(height: 2),
               pw.Text(
-                'Layanan Pelanggan Bisakulak',
+                'Layanan Pelanggan Bisa Kulak',
                 textAlign: pw.TextAlign.center,
-                style: pw.TextStyle(
-                  fontSize: 5,
-                  fontWeight: pw.FontWeight.bold,
-                ),
+                style: pw.TextStyle(fontSize: 5),
               ),
 
-              pw.Text(
-                'Email: bisakulakpusat@gmail.com',
-                textAlign: pw.TextAlign.center,
-                style: pw.TextStyle(
-                  fontSize: 5,
-                  fontWeight: pw.FontWeight.bold,
-                ),
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.center,
+                children: [
+                  pw.Flexible(
+                    child: pw.Text(
+                      transaction.storeEmail ?? 'bisakulakpusat@gmail.com',
+                      maxLines: 1,
+                      textAlign: pw.TextAlign.right,
+                      style: pw.TextStyle(fontSize: 5),
+                    ),
+                  ),
+
+                  pw.Text('  -  ', style: pw.TextStyle(fontSize: 5)),
+
+                  pw.Flexible(
+                    child: pw.Text(
+                      '085173372019',
+                      maxLines: 1,
+                      textAlign: pw.TextAlign.left,
+                      style: pw.TextStyle(fontSize: 5),
+                    ),
+                  ),
+                ],
               ),
             ],
           );
@@ -212,18 +233,17 @@ class PdfReceiptService {
     );
 
     final directory = await getApplicationDocumentsDirectory();
-    final fileName =
-        'nota_${transaction.invoiceNumber}_${DateTime.now().millisecondsSinceEpoch}.pdf';
+    final fileName = '${transaction.invoiceNumber}.pdf';
 
     final file = File('${directory.path}/$fileName');
     await file.writeAsBytes(await pdf.save());
-    
+
     return file;
   }
 
   static pw.Widget _infoRow(String label, String value, {bool bold = false}) {
     return pw.Padding(
-      padding: const pw.EdgeInsets.symmetric(vertical: 2),
+      padding: const pw.EdgeInsets.symmetric(vertical: 1),
 
       child: pw.Row(
         mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
@@ -232,7 +252,7 @@ class PdfReceiptService {
           pw.Text(
             label,
             style: pw.TextStyle(
-              fontSize: 6,
+              fontSize: 5,
               fontWeight: bold ? pw.FontWeight.bold : pw.FontWeight.normal,
             ),
           ),
@@ -242,7 +262,7 @@ class PdfReceiptService {
               value,
               textAlign: pw.TextAlign.right,
               style: pw.TextStyle(
-                fontSize: 6,
+                fontSize: 5,
                 fontWeight: bold ? pw.FontWeight.bold : pw.FontWeight.normal,
               ),
             ),

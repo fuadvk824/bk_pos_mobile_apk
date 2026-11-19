@@ -39,15 +39,13 @@ class ProductScreen extends ConsumerWidget {
             ]);
           },
 
-          // child: CustomScrollView(
-          //   slivers: [
-          //     SliverPinnedHeader(child: ProductFilterSection()),
-          //     MultiSliver(children: [ProductGrid()]),
-          //   ],
-          // ),
           child: NotificationListener<ScrollNotification>(
             onNotification: (notification) {
-              if (notification.metrics.extentAfter < 300) {
+              // Hanya tangani scroll vertikal dari CustomScrollView utama.
+              // Abaikan scroll horizontal pada daftar tombol filter.
+              if (notification.metrics.axis == Axis.vertical &&
+                  notification.depth == 0 &&
+                  notification.metrics.extentAfter < 300) {
                 notifier.loadMore();
               }
 
@@ -59,7 +57,6 @@ class ProductScreen extends ConsumerWidget {
 
                 MultiSliver(children: [ProductGrid()]),
 
-                // Loading produk berikutnya
                 if (state.isLoadingMore)
                   const SliverToBoxAdapter(
                     child: Padding(

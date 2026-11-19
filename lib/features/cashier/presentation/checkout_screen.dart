@@ -2,6 +2,7 @@ import 'package:bk_pos/features/cashier/presentation/checkout_summary.dart';
 import 'package:bk_pos/features/cashier/presentation/customer_form.dart';
 import 'package:bk_pos/features/cashier/presentation/delivery_form.dart';
 import 'package:bk_pos/features/cashier/presentation/payment_form.dart';
+import 'package:bk_pos/features/cashier/presentation/widgets/floating_change_calculator.dart';
 import 'package:bk_pos/features/cashier/provider/checkout_provider.dart';
 import 'package:bk_pos/utils/app_colors.dart';
 import 'package:bk_pos/utils/app_toast.dart';
@@ -30,24 +31,33 @@ class CheckoutScreen extends ConsumerWidget {
         ),
       ),
 
-      body: GestureDetector(
-        behavior: HitTestBehavior.translucent,
-        onTap: () {
-          FocusScope.of(context).unfocus();
-        },
-        child: ListView(
-          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-          padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-          children: const [
-            CustomerForm(),
-            SizedBox(height: 12),
-            DeliveryForm(),
-            SizedBox(height: 12),
-            PaymentForm(),
-            SizedBox(height: 12),
-            CheckoutSummary(),
-          ],
-        ),
+      body: Stack(
+        children: [
+          GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onTap: () {
+              FocusScope.of(context).unfocus();
+            },
+            child: ListView(
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+              children: const [
+                CustomerForm(),
+                SizedBox(height: 12),
+                DeliveryForm(),
+                SizedBox(height: 12),
+                PaymentForm(),
+                SizedBox(height: 12),
+                CheckoutSummary(),
+              ],
+            ),
+          ),
+          Positioned.fill(
+            child: FloatingChangeCalculator(
+              totalTransaksi: ref.read(checkoutProvider.notifier).total,
+            ),
+          ),
+        ],
       ),
 
       bottomNavigationBar: SafeArea(
@@ -88,7 +98,6 @@ class CheckoutScreen extends ConsumerWidget {
                         );
                       }
                     },
-
               icon: state.isLoading
                   ? const SizedBox(
                       width: 20,

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bk_pos/model/product_model.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -58,61 +60,53 @@ class ProductState {
 
 class ProductNotifier extends StateNotifier<ProductState> {
   final ProductRepository repo;
+  Timer? _searchDebounce;
+  int _requestId = 0;
 
   ProductNotifier(this.repo) : super(const ProductState()) {
     loadProducts();
   }
 
-  // Future<void> loadProducts() async {
-  //   if (state.selectedFilter == ProductFilter.backorder) {
-  //     state = state.copyWith(isLoading: false, products: []);
-  //     return;
-  //   }
+  Future<void> loadProducts({String search = ''}) async {
+    _searchDebounce?.cancel();
 
-  //   state = state.copyWith(isLoading: true);
-
-  //   try {
-  //     final products = await repo.getProducts();
-
-  //     state = state.copyWith(isLoading: false, allProducts: products);
-
-  //     _applyFilter();
-  //   } catch (e) {
-  //     state = state.copyWith(isLoading: false);
-  //     rethrow;
-  //   }
-  // }
-
-  Future<void> loadProducts() async {
-    if (state.isLoading || state.isLoadingMore) return;
-
-    if (state.selectedFilter == ProductFilter.backorder) {
-      state = state.copyWith(isLoading: false, products: []);
-      return;
-    }
+    final requestId = ++_requestId;
 
     state = state.copyWith(
       isLoading: true,
+      isLoadingMore: false,
       currentPage: 0,
       hasMore: true,
       allProducts: [],
       products: [],
+      search: search,
     );
 
     try {
-      final result = await repo.getProducts(page: 1);
+      final result = await repo.getProducts(
+        page: 1,
+        search: search,
+        filter: _getApiFilter(),
+      );
+
+      if (requestId != _requestId) return;
 
       state = state.copyWith(
         isLoading: false,
+        isLoadingMore: false,
         allProducts: result.products,
+        products: result.products,
         currentPage: result.currentPage,
         hasMore: result.hasMorePages,
       );
 
-      _applyFilter();
+      if (state.selectedFilter != ProductFilter.all) {
+        _applyFilter();
+      }
     } catch (e) {
-      state = state.copyWith(isLoading: false);
-      rethrow;
+      if (requestId != _requestId) return;
+
+      state = state.copyWith(isLoading: false, isLoadingMore: false);
     }
   }
 
@@ -124,12 +118,23 @@ class ProductNotifier extends StateNotifier<ProductState> {
       return;
     }
 
+    final requestId = _requestId;
+
     state = state.copyWith(isLoadingMore: true);
 
     try {
       final nextPage = state.currentPage + 1;
 
-      final result = await repo.getProducts(page: nextPage);
+      final result = await repo.getProducts(
+        page: nextPage,
+        search: state.selectedFilter == ProductFilter.all
+            ? state.search.trim()
+            : '',
+        filter: _getApiFilter(),
+      );
+
+      // Request sudah tidak berlaku jika pengguna pindah filter
+      if (requestId != _requestId) return;
 
       final updatedProducts = [...state.allProducts, ...result.products];
 
@@ -140,9 +145,140 @@ class ProductNotifier extends StateNotifier<ProductState> {
         isLoadingMore: false,
       );
 
-      _applyFilter();
+      if (state.selectedFilter == ProductFilter.all) {
+        state = state.copyWith(products: updatedProducts);
+      } else {
+        _applyFilter();
+      }
     } catch (e) {
+      if (requestId != _requestId) return;
+
       state = state.copyWith(isLoadingMore: false);
+    }
+  }
+
+  void setFilter(ProductFilter filter) {
+    _searchDebounce?.cancel();
+
+    // Batalkan request sebelumnya
+    ++_requestId;
+
+    // Bersihkan data dan status loading sebelumnya
+    state = state.copyWith(
+      selectedFilter: filter,
+      search: '',
+      allProducts: [],
+      products: [],
+      currentPage: 0,
+      hasMore: true,
+      isLoading: false,
+      isLoadingMore: false,
+    );
+
+    // Backorder tidak mengambil data sebelum pencarian
+    if (filter == ProductFilter.backorder) {
+      return;
+    }
+
+    // Ambil ulang halaman pertama untuk filter yang dipilih
+    loadProducts();
+  }
+
+  Future<void> searchProduct(String keyword) async {
+    state = state.copyWith(search: keyword);
+
+    // BACKORDER: tetap menggunakan API khusus
+    // BACKORDER: pencarian API dengan minimal 3 karakter dan debounce
+    if (state.selectedFilter == ProductFilter.backorder) {
+      _searchDebounce?.cancel();
+
+      // Batalkan request pencarian sebelumnya
+      ++_requestId;
+
+      final searchKeyword = keyword.trim();
+
+      // Kurang dari 3 karakter
+      if (searchKeyword.length < 3) {
+        state = state.copyWith(products: [], isLoading: false);
+        return;
+      }
+
+      // Minimal 3 karakter: tunggu 400 ms
+      final requestId = _requestId;
+
+      _searchDebounce = Timer(const Duration(milliseconds: 400), () async {
+        if (requestId != _requestId) return;
+
+        state = state.copyWith(isLoading: true);
+
+        try {
+          final products = await repo.searchBackorder(searchKeyword);
+
+          if (requestId != _requestId) return;
+
+          state = state.copyWith(products: products, isLoading: false);
+        } catch (e) {
+          if (requestId != _requestId) return;
+
+          state = state.copyWith(products: [], isLoading: false);
+        }
+      });
+
+      return;
+    }
+
+    // ALL STOCK: pencarian melalui API Laravel
+    if (state.selectedFilter == ProductFilter.all) {
+      _searchDebounce?.cancel();
+
+      // Batalkan request sebelumnya
+      ++_requestId;
+
+      final searchKeyword = keyword.trim();
+
+      // Jika kurang dari 3 karakter
+      if (searchKeyword.length < 3) {
+        if (searchKeyword.isEmpty) {
+          // Jika search dikosongkan, tampilkan kembali 6 produk awal
+          loadProducts();
+        } else {
+          // Belum melakukan pencarian API
+          state = state.copyWith(
+            isLoading: false,
+            products: [],
+            allProducts: [],
+            currentPage: 0,
+            hasMore: true,
+          );
+        }
+        return;
+      }
+
+      // Minimal 3 karakter: tunggu 400 ms
+      _searchDebounce = Timer(const Duration(milliseconds: 400), () {
+        loadProducts(search: searchKeyword);
+      });
+
+      return;
+    }
+
+    // FILTER LAIN: tetap pencarian lokal
+    _applyFilter();
+  }
+
+  String? _getApiFilter() {
+    switch (state.selectedFilter) {
+      case ProductFilter.lowStock:
+        return 'low_stock';
+
+      case ProductFilter.discount:
+        return 'discount';
+
+      case ProductFilter.bestSeller:
+        return 'best_seller';
+
+      default:
+        return null;
     }
   }
 
@@ -150,44 +286,6 @@ class ProductNotifier extends StateNotifier<ProductState> {
     final isBackorder = state.selectedFilter == ProductFilter.backorder;
 
     return repo.getProductByQr(qr, backorder: isBackorder);
-  }
-
-  void setFilter(ProductFilter filter) {
-    state = state.copyWith(selectedFilter: filter, search: '');
-
-    if (filter == ProductFilter.backorder) {
-      state = state.copyWith(products: []);
-      return;
-    }
-
-    _applyFilter();
-  }
-
-  Future<void> searchProduct(String keyword) async {
-    state = state.copyWith(search: keyword);
-
-    // BACKORDER
-    if (state.selectedFilter == ProductFilter.backorder) {
-      if (keyword.trim().isEmpty) {
-        state = state.copyWith(products: []);
-        return;
-      }
-
-      state = state.copyWith(isLoading: true);
-
-      try {
-        final products = await repo.searchBackorder(keyword.trim());
-
-        state = state.copyWith(products: products, isLoading: false);
-      } catch (e) {
-        state = state.copyWith(products: [], isLoading: false);
-      }
-
-      return;
-    }
-
-    // NORMAL
-    _applyFilter();
   }
 
   void _applyFilter() {
@@ -208,7 +306,6 @@ class ProductNotifier extends StateNotifier<ProductState> {
       case ProductFilter.bestSeller:
         result = result.where((e) => e.sold > 0).toList();
         result.sort((a, b) => b.sold.compareTo(a.sold));
-        result = result.take(5).toList();
         break;
 
       case ProductFilter.backorder:
@@ -227,6 +324,12 @@ class ProductNotifier extends StateNotifier<ProductState> {
     }
 
     state = state.copyWith(products: result);
+  }
+
+  @override
+  void dispose() {
+    _searchDebounce?.cancel();
+    super.dispose();
   }
 }
 

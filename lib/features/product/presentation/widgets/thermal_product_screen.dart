@@ -30,18 +30,62 @@ class _ThermalProductScreenState extends State<ThermalProductScreen> {
   List<BluetoothInfo> _printers = [];
   BluetoothInfo? _selectedPrinter;
 
+  late final TextEditingController _normalPriceController;
+  late final TextEditingController _promoPriceController;
+
+  late final TextEditingController _paddingLeftController;
+  late final TextEditingController _paddingRightController;
+  late final TextEditingController _paddingTopController;
+  late final TextEditingController _paddingBottomController;
+
   final currency = NumberFormat.currency(
     locale: 'id_ID',
     symbol: 'Rp ',
     decimalDigits: 0,
   );
- 
+
   @override
   void initState() {
     super.initState();
 
+    _normalPriceController = TextEditingController(
+      text: widget.product.price.toStringAsFixed(0),
+    );
+
+    _promoPriceController = TextEditingController(
+      text: widget.product.finalPrice.toStringAsFixed(0),
+    );
+
+    _paddingLeftController = TextEditingController(text: '8');
+    _paddingRightController = TextEditingController(text: '8');
+    _paddingTopController = TextEditingController(text: '0');
+    _paddingBottomController = TextEditingController(text: '50');
+
     _checkBluetoothStatus();
   }
+
+  @override
+  void dispose() {
+    _normalPriceController.dispose();
+    _promoPriceController.dispose();
+
+    _paddingLeftController.dispose();
+    _paddingRightController.dispose();
+    _paddingTopController.dispose();
+    _paddingBottomController.dispose();
+
+    super.dispose();
+  }
+
+  double get _paddingLeft => double.tryParse(_paddingLeftController.text) ?? 0;
+
+  double get _paddingRight =>
+      double.tryParse(_paddingRightController.text) ?? 0;
+
+  double get _paddingTop => double.tryParse(_paddingTopController.text) ?? 0;
+
+  double get _paddingBottom =>
+      double.tryParse(_paddingBottomController.text) ?? 0;
 
   Future<void> _checkBluetoothStatus() async {
     final enabled = await ThermalPrinterService.isBluetoothEnabled();
@@ -160,9 +204,24 @@ class _ThermalProductScreenState extends State<ThermalProductScreen> {
       return;
     }
 
+    // VALIDASI HARGA
+    if (_normalPriceController.text.trim().isEmpty ||
+        _promoPriceController.text.trim().isEmpty) {
+      AppToast.error(
+        title: 'Harga Kosong',
+        description: 'Harga normal dan promo harus diisi.',
+      );
+      return;
+    }
+
+    // MULAI PRINT
     setState(() {
       _printing = true;
     });
+
+    FocusManager.instance.primaryFocus?.unfocus();
+
+    await WidgetsBinding.instance.endOfFrame;
 
     final result = await ThermalProductService.printProductPrice(
       product: widget.product,
@@ -187,6 +246,116 @@ class _ThermalProductScreenState extends State<ThermalProductScreen> {
     }
   }
 
+  Widget _buildPaddingInput({
+    required String label,
+    required TextEditingController controller,
+  }) {
+    return Expanded(
+      child: TextField(
+        controller: controller,
+        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+        decoration: InputDecoration(
+          labelText: label,
+          suffixText: 'px',
+          isDense: true,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 10,
+            vertical: 12,
+          ),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+        onChanged: (_) {
+          setState(() {});
+        },
+      ),
+    );
+  }
+
+  Widget _buildPaddingSettings() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.padding, size: 20, color: AppColors.primary),
+              SizedBox(width: 8),
+              Text(
+                'Custom Padding Preview',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 6),
+
+          Text(
+            'Atur jarak konten pada label harga.',
+            style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+          ),
+
+          const SizedBox(height: 14),
+
+          Row(
+            children: [
+              _buildPaddingInput(
+                label: 'Left',
+                controller: _paddingLeftController,
+              ),
+              const SizedBox(width: 10),
+              _buildPaddingInput(
+                label: 'Right',
+                controller: _paddingRightController,
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          Row(
+            children: [
+              _buildPaddingInput(
+                label: 'Top',
+                controller: _paddingTopController,
+              ),
+              const SizedBox(width: 10),
+              _buildPaddingInput(
+                label: 'Bottom',
+                controller: _paddingBottomController,
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () {
+                setState(() {
+                  _paddingLeftController.text = '8';
+                  _paddingRightController.text = '8';
+                  _paddingTopController.text = '0';
+                  _paddingBottomController.text = '50';
+                });
+              },
+              icon: const Icon(Icons.restart_alt),
+              label: const Text('Reset Padding'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final product = widget.product;
@@ -194,7 +363,6 @@ class _ThermalProductScreenState extends State<ThermalProductScreen> {
     final qrData = product.barcode?.isNotEmpty == true
         ? product.barcode!
         : product.productCode;
-
 
     final now = DateTime.now();
     final dateFormat = DateFormat('MMM yyyy', 'en_US');
@@ -218,137 +386,182 @@ class _ThermalProductScreenState extends State<ThermalProductScreen> {
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
 
-              child: Center(
-                child: RepaintBoundary(
-                  key: _printKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Center(
+                    child: RepaintBoundary(
+                      key: _printKey,
 
-                  child: Container(
-                    width: 288,
-                    padding: const EdgeInsets.only(
-                      left: 8,
-                      right: 8,
-                      top: 0,
-                      bottom: 50,
-                    ),
-                    color: AppColors.light,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Text(
-                          product.name,
-
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
+                      child: Container(
+                        width: 288,
+                        padding: EdgeInsets.only(
+                          left: _paddingLeft,
+                          right: _paddingRight,
+                          top: _paddingTop,
+                          bottom: _paddingBottom,
                         ),
-
-                        const SizedBox(height: 2),
-                        const Divider(color: AppColors.dark, height: 1),
-                        const SizedBox(height: 2),
-
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
+                        color: AppColors.light,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            Expanded(
-                              child: SizedBox(
-                                height: 100,
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-
-                                  children: [
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        const Text(
-                                          'Harga Normal',
-                                          style: TextStyle(
-                                            fontSize: 10,
-                                            color: Colors.black,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-
-                                        Text(
-                                          currency.format(product.price),
-                                          style: const TextStyle(
-                                            fontSize: 19,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        const Divider(
-                                          color: AppColors.dark,
-                                          height: 1,
-                                        ),
-                                      ],
-                                    ),
-
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        const Text(
-                                          'Harga Promo',
-                                          style: TextStyle(
-                                            fontSize: 10,
-                                            color: Colors.black,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-
-                                        Text(
-                                          currency.format(product.finalPrice),
-                                          style: const TextStyle(
-                                            fontSize: 19,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.black,
-                                          ),
-                                        ),
-                                        const Divider(
-                                          color: AppColors.dark,
-                                          height: 1,
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
+                            Text(
+                              product.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
 
-                            const SizedBox(width: 16),
+                            const SizedBox(height: 2),
+                            const Divider(color: AppColors.dark, height: 1),
+                            const SizedBox(height: 6),
 
-                            Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
+                            Row(
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
-                                QrImageView(
-                                  data: qrData,
-                                  version: QrVersions.auto,
-                                  size: 100,
-                                  backgroundColor: Colors.white,
-                                  errorCorrectionLevel: QrErrorCorrectLevel.M,
-                                ),
-                                Text(
-                                  periodText,
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                    fontSize: 8,
-                                    fontWeight: FontWeight.bold,
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+
+                                    children: [
+                                      // HARGA NORMAL
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const Text(
+                                            'Harga Normal',
+                                            style: TextStyle(
+                                              fontSize: 8,
+                                              color: Colors.black,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+
+                                          SizedBox(
+                                            // height: 27,
+                                            child: TextField(
+                                              controller:
+                                                  _normalPriceController,
+                                              keyboardType:
+                                                  TextInputType.number,
+                                              style: const TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.black,
+                                              ),
+                                              decoration: const InputDecoration(
+                                                prefixText: 'Rp ',
+                                                border: InputBorder.none,
+                                                isDense: true,
+                                                contentPadding: EdgeInsets.zero,
+                                              ),
+                                              onChanged: (_) {
+                                                setState(() {});
+                                              },
+                                            ),
+                                          ),
+
+                                          const Divider(
+                                            color: AppColors.dark,
+                                            height: 1,
+                                          ),
+                                        ],
+                                      ),
+
+                                      // Space antar harga normal dan harga promo
+                                      const SizedBox(height: 6),
+
+                                      // HARGA PROMO
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const Text(
+                                            'Harga Promo',
+                                            style: TextStyle(
+                                              fontSize: 8,
+                                              color: Colors.black,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+
+                                          SizedBox(
+                                            // height: 27,
+                                            child: TextField(
+                                              controller: _promoPriceController,
+                                              keyboardType:
+                                                  TextInputType.number,
+                                              style: const TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.black,
+                                              ),
+                                              decoration: const InputDecoration(
+                                                prefixText: 'Rp ',
+                                                border: InputBorder.none,
+                                                isDense: true,
+                                                contentPadding: EdgeInsets.zero,
+                                              ),
+                                              onChanged: (_) {
+                                                setState(() {});
+                                              },
+                                            ),
+                                          ),
+
+                                          const Divider(
+                                            color: AppColors.dark,
+                                            height: 1,
+                                          ),
+                                        ],
+                                      ),
+                                    ],
                                   ),
+                                ),
+
+                                const SizedBox(width: 12),
+
+                                Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    QrImageView(
+                                      data: qrData,
+                                      version: QrVersions.auto,
+                                      size: 60,
+                                      padding: EdgeInsets.zero,
+                                      backgroundColor: Colors.white,
+                                      errorCorrectionLevel:
+                                          QrErrorCorrectLevel.M,
+                                    ),
+                                    const SizedBox(height: 3),
+                                    Text(
+                                      periodText,
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                        fontSize: 6,
+                                        fontWeight: FontWeight.bold,
+                                        height: 1,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
                           ],
                         ),
-                      ],
+                      ),
                     ),
                   ),
-                ),
+                  const SizedBox(height: 14),
+
+                  _buildPaddingSettings(),
+                ],
               ),
             ),
           ),
@@ -371,7 +584,6 @@ class _ThermalProductScreenState extends State<ThermalProductScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                
                   Container(
                     width: double.infinity,
                     decoration: BoxDecoration(
@@ -705,4 +917,3 @@ class _ThermalProductScreenState extends State<ThermalProductScreen> {
     );
   }
 }
- 

@@ -43,7 +43,7 @@ class ProductCard extends ConsumerWidget {
                     ),
                   );
                 },
-                
+
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -77,35 +77,37 @@ class ProductCard extends ConsumerWidget {
                                     ),
                                   ),
                           ),
-                          Positioned(
-                            left: 8,
-                            bottom: 8,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.light,
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(
-                                "Stok: ${product.stock}",
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: product.stock <= 0
-                                      ? Colors.red
-                                      : product.stock < 10
-                                      ? Colors.orange
-                                      : Colors.green,
-                                ),
-                              ),
-                            ),
-                          ),
+
+                          // Positioned(
+                          //   left: 8,
+                          //   bottom: 8,
+                          //   child: Container(
+                          //     padding: const EdgeInsets.symmetric(
+                          //       horizontal: 10,
+                          //       vertical: 4,
+                          //     ),
+                          //     decoration: BoxDecoration(
+                          //       color: AppColors.light,
+                          //       borderRadius: BorderRadius.circular(6),
+                          //     ),
+                          //     child: Text(
+                          //       "Stok: ${product.stock}",
+                          //       style: TextStyle(
+                          //         fontSize: 11,
+                          //         fontWeight: FontWeight.w600,
+                          //         color: product.stock <= 0
+                          //             ? Colors.red
+                          //             : product.stock < 10
+                          //             ? Colors.orange
+                          //             : Colors.green,
+                          //       ),
+                          //     ),
+                          //   ),
+                          // ),
                         ],
                       ),
                     ),
+
                     const SizedBox(height: 8),
                     Text(
                       product.name,
@@ -118,7 +120,20 @@ class ProductCard extends ConsumerWidget {
                     ),
                     Text(
                       product.productCode,
-                      style: TextStyle(color: AppColors.faded, fontSize: 12),
+                      style: TextStyle(color: AppColors.faded, fontSize: 11),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      "Stok: ${product.stock}",
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: product.stock <= 0
+                            ? Colors.red
+                            : product.stock < 10
+                            ? Colors.orange
+                            : Colors.green,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     if (product.discount > 0) ...[
@@ -181,7 +196,6 @@ class ProductCard extends ConsumerWidget {
             SizedBox(
               width: double.infinity,
               child: FilledButton.icon(
-                
                 onPressed: () {
                   try {
                     final added = ref

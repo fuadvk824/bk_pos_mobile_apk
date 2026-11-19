@@ -1,5 +1,6 @@
 import 'package:bk_pos/features/cashier/provider/wilayah_provider.dart';
 import 'package:bk_pos/model/checkout_result_model.dart';
+import 'package:bk_pos/model/payment_checkout_model.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/checkout_repository.dart';
@@ -34,7 +35,7 @@ class CheckoutNotifier extends StateNotifier<CheckoutState> {
   WilayahState get wilayah => ref.read(wilayahProvider);
 
   String get customerName => customer.customer.name;
-  String get customerPhone => customer.customer.phone;  
+  String get customerPhone => customer.customer.phone;
   String get customerAddress => customer.customer.address;
 
   String get deliveryType => delivery.delivery.deliveryType;
@@ -49,12 +50,13 @@ class CheckoutNotifier extends StateNotifier<CheckoutState> {
   String get notes => delivery.delivery.notes;
 
   String get paymentStatus => payment.payment.paymentStatus;
-  String get paymentMethod => payment.payment.paymentMethod;
-  double get paymentAmount => payment.payment.paymentAmount;
+  List<PaymentMethodEntry> get payments => payment.payment.payments;
+  double get paymentAmount => payment.payment.totalPayment;
   double get nego => payment.payment.nego;
 
   int get pointsUsed => customer.pointsUsed;
   double get subtotal => cart.subtotal;
+
   double get totalDiscount {
     return pointsUsed + nego;
   }
@@ -74,7 +76,6 @@ class CheckoutNotifier extends StateNotifier<CheckoutState> {
 
     return true;
   }
-
   Map<String, dynamic> checkoutPayload() {
     return {
       'transaction_type': cart.isBackorder ? 'backorder' : 'normal',
@@ -93,12 +94,12 @@ class CheckoutNotifier extends StateNotifier<CheckoutState> {
       'notes': notes,
 
       'payment_status': paymentStatus,
-      'payment_method': paymentStatus == 'unpaid' ? null : paymentMethod,
-      'payment_amount': paymentStatus == 'paid'
-          ? total
-          : paymentStatus == 'partial'
-          ? paymentAmount 
-          : null,
+
+      'payments': paymentStatus == 'unpaid'
+          ? []
+          : payments.map((payment) {
+              return payment.toJson();
+            }).toList(),
 
       'points_used': pointsUsed,
       'nego': nego,
@@ -157,15 +158,11 @@ class CheckoutNotifier extends StateNotifier<CheckoutState> {
         if (line.quantity <= 0) {
           return 'Qty harga produk ${item.product.name} tidak valid';
         }
-
-        if (line.price <= 0) {
-          return 'Harga produk ${item.product.name} harus lebih dari 0';
-        }
       }
 
-      if (item.subtotal <= 0) {
-        return 'Harga produk ${item.product.name} tidak valid';
-      }
+      // if (item.subtotal < 0) {
+      //   return 'Harga produk ${item.product.name} tidak valid';
+      // }
     }
 
     final customerModel = currentCustomer.customer;
@@ -203,13 +200,36 @@ class CheckoutNotifier extends StateNotifier<CheckoutState> {
       return 'Nominal nego melebihi total transaksi';
     }
 
+    // ========================================
+    // VALIDASI MULTIPLE PAYMENT
+    // ========================================
+
+    final paymentList = currentPaymentModel.payments;
+
+    final totalPayment = paymentList.fold<double>(
+      0,
+      (sum, payment) => sum + payment.amount,
+    );
+
+    if (currentPaymentModel.paymentStatus == 'unpaid') {
+      if (paymentList.isNotEmpty) {
+        return 'Pembayaran harus dikosongkan untuk status belum bayar';
+      }
+    }
+
     if (currentPaymentModel.paymentStatus == 'partial') {
-      if (currentPaymentModel.paymentAmount <= 0) {
-        return 'Nominal pembayaran harus lebih dari 0';
+      if (paymentList.isEmpty) {
+        return 'Minimal satu metode pembayaran harus dipilih';
       }
 
-      if (currentPaymentModel.paymentAmount > currentTotal) {
-        return 'Nominal pembayaran melebihi total transaksi';
+      for (final payment in paymentList) {
+        if (payment.amount <= 0) {
+          return 'Nominal setiap metode pembayaran harus lebih dari 0';
+        }
+      }
+
+      if (totalPayment >= currentTotal) {
+        return 'Total pembayaran DP harus kurang dari total transaksi';
       }
     }
 
@@ -217,20 +237,31 @@ class CheckoutNotifier extends StateNotifier<CheckoutState> {
       if (currentTotal <= 0) {
         return 'Total transaksi tidak valid';
       }
-    }
 
-    if (currentPaymentModel.paymentStatus != 'unpaid' &&
-        currentPaymentModel.paymentMethod.trim().isEmpty) {
-      return 'Metode pembayaran wajib dipilih';
-    }
+      if (paymentList.isEmpty) {
+        return 'Minimal satu metode pembayaran harus dipilih';
+      }
 
-    if (currentCart.isBackorder) {
-      for (final item in currentCart.items) {
-        if (item.subtotal <= 0) {
-          return 'Harga produk ${item.product.name} tidak valid';
+      for (final payment in paymentList) {
+        if (payment.amount <= 0) {
+          return 'Nominal setiap metode pembayaran harus lebih dari 0';
         }
       }
+
+      if ((totalPayment - currentTotal).abs() > 0.01) {
+        return 'Total pembayaran (${totalPayment.toStringAsFixed(0)}) '
+            'harus sama dengan total transaksi '
+            '(${currentTotal.toStringAsFixed(0)})';
+      }
     }
+
+    // if (currentCart.isBackorder) {
+    //   for (final item in currentCart.items) {
+    //     if (item.subtotal <= 0) {
+    //       return 'Harga produk ${item.product.name} tidak valid';
+    //     }
+    //   }
+    // }
 
     return null;
   }
@@ -255,7 +286,6 @@ class CheckoutNotifier extends StateNotifier<CheckoutState> {
       state = state.copyWith(isLoading: false);
     }
   }
-
   void clearAll() {
     state = const CheckoutState();
 
@@ -271,3 +301,5 @@ final checkoutProvider = StateNotifierProvider<CheckoutNotifier, CheckoutState>(
     return CheckoutNotifier(ref, ref.read(checkoutRepositoryProvider));
   },
 );
+
+ 

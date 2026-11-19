@@ -52,9 +52,6 @@ class WilayahSearchField extends StatelessWidget {
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: hasSelectedWilayah
-                  ? Colors.grey.shade700
-                  : Colors.grey.shade500,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,

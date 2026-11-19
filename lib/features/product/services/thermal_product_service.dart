@@ -9,7 +9,7 @@ import 'package:image/image.dart';
 import 'package:print_bluetooth_thermal/print_bluetooth_thermal.dart';
 
 class ThermalProductService {
-
+ 
   static Future<BluetoothInfo?> findPrinter() async {
     try {
       final devices = await PrintBluetoothThermal.pairedBluetooths;
@@ -67,7 +67,6 @@ class ThermalProductService {
 
   static Future<ProductPrintResult> connectPrinter() async {
     try {
-
       final bluetoothEnabled = await PrintBluetoothThermal.bluetoothEnabled;
       if (!bluetoothEnabled) {
         return ProductPrintResult(

@@ -61,9 +61,7 @@ class _DeliveryFormState extends ConsumerState<DeliveryForm> {
               "Pengiriman",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-
             const SizedBox(height: 16),
-
             DropdownButtonFormField<String>(
               key: ValueKey(state.delivery.deliveryType),
               initialValue: state.delivery.deliveryType,
